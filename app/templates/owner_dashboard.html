@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoTrack - Gestão da Oficina</title>
+</head>
+<body style="background-color: #ecf0f1; font-family: Arial, sans-serif; padding: 50px; color: #2c3e50;">
+
+    <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <h1 style="color: #2980b9;">Visão Gerencial 📊</h1>
+        <p>Bem-vindo, chefe {{ user.first_name }}! Você está logado como <strong>Dono de Oficina</strong>.</p>
+        
+        <div style="margin-top: 50px; padding: 30px; background-color: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <p>Em breve: Gráficos, faturamento e gestão da equipe de mecânicos aparecerão aqui!</p>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" style="padding: 10px 20px; background-color: #e74c3c; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px;">
+                    Sair do Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

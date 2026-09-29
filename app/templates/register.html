@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoTrack - Criar Conta</title>
+</head>
+<body style="background-color: #f4f4f9; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+
+    <div style="background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 350px; text-align: center;">
+        <h2 style="color: #8e44ad; margin-bottom: 20px;">Nova Conta</h2>
+
+        <!-- Formulário POST de Registro -->
+        <form method="POST" style="text-align: left;">
+            {% csrf_token %}
+            
+            <!-- O Django desenha os campos de Usuário e Senha sozinhos -->
+            {{ form.as_p }}
+
+            <button type="submit" style="width: 100%; padding: 10px; background-color: #8e44ad; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold;">
+                Criar Minha Conta
+            </button>
+        </form>
+        
+        <div style="margin-top: 20px;">
+            <a href="{% url 'login' %}" style="color: #3498db; text-decoration: none; font-size: 14px;">
+                Já tem uma conta? Faça Login
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

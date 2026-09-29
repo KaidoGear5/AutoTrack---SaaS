@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoTrack - Registrar Problema</title>
+</head>
+<body style="background-color: #f4f4f9; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+
+    <div style="background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 400px;">
+        <h2 style="color: #e67e22; text-align: center; margin-bottom: 20px;">Registrar Problema</h2>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- O Django desenha os campos que definimos no Meta do forms.py -->
+            {{ form.as_p }}
+            
+            <button type="submit" style="width: 100%; padding: 12px; background-color: #e67e22; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold;">
+                Registrar
+            </button>
+        </form>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="{% url 'home' %}" style="color: #7f8c8d; text-decoration: none; font-size: 14px;">← Voltar para a Garagem</a>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoTrack - Novo Veículo</title>
+</head>
+<body style="background-color: #f4f4f9; font-family: Arial, sans-serif; padding: 50px;">
+
+    <div style="background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+        <h2 style="color: #2c3e50; margin-bottom: 20px;">Cadastrar Novo Veículo</h2>
+
+        <!-- Formulário de Envio (POST) -->
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- A mágica do Django acontece aqui -->
+            {{ form.as_p }}
+
+            <button type="submit" style="width: 100%; padding: 10px; background-color: #27ae60; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold;">
+                Salvar Veículo
+            </button>
+        </form>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="{% url 'home' %}" style="color: #3498db; text-decoration: none;">&larr; Cancelar e Voltar</a>
+        </div>
+    </div>
+
+</body>
+</html>
