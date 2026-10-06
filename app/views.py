@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 # login_required: É um "cadeado". Se o usuário não estiver logado, não deixa acessar a função e manda pra tela de login.
 from django.contrib.auth.decorators import login_required
 # São importadas as classes que criamos no models.py (Vehicle, Maintenance e ServiceItem) para manipular os dados do banco de dados.
-from .models import Vehicle, Maintenance, ServiceItem
+from .models import Vehicle, Maintenance, ServiceItem, Workshop
 # São importados os formulários que criados no forms.py para manipular os dados do usuário.
 from .forms import VehicleForm, CustomUserCreationForm, MaintenanceForm, FinishMaintenanceForm, VistoriaForm
 from django.contrib.auth import login # Ferramenta para forçar o login automático após o cadastro
@@ -20,22 +20,64 @@ def home(request):
     
     # ROTA DO MECÂNICO
     if request.user.role == 'MECANICO':
-        # Busca todas as O.S que ninguém pegou ainda (PENDENTE)
+        erro = None
+        
+        # Se o mecânico digitou um código e clicou em "Vincular"
+        if request.method == 'POST' and 'codigo_convite' in request.POST:
+            codigo_digitado = request.POST.get('codigo_convite')
+            # Procura no banco de dados se existe uma Oficina (Workshop) com esse exato código
+            oficina_encontrada = Workshop.objects.filter(codigo_convite=codigo_digitado).first()
+            
+            if oficina_encontrada:
+                # Se achou, vincula o mecânico a ela e salva!
+                request.user.oficina_vinculada = oficina_encontrada
+                request.user.save()
+                return redirect('home')
+            else:
+                erro = "Código inválido. Verifique com o dono da oficina e tente novamente."
+
+        # Busca as O.S que ninguém pegou ainda (PENDENTE)
         fila_de_espera = Maintenance.objects.filter(status='PENDENTE').order_by('-criado_em')
         
-        # Busca as O.S que ESTE mecânico assumiu (status ACEITA ou ANDAMENTO)
+        # Busca as O.S que ESTE mecânico assumiu
         meus_servicos = Maintenance.objects.filter(mecanico=request.user, status__in=['ACEITA', 'ANDAMENTO']).order_by('-criado_em')
 
         # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
             'solicitacoes': fila_de_espera, # Lista de solicitações de manutenção aguardando atendimento, para mostrar no painel
-            'meus_servicos': meus_servicos # Lista de serviços do mecânico logado, para mostrar no painel
+            'meus_servicos': meus_servicos, # Lista de serviços do mecânico logado, para mostrar no painel
+            'erro': erro # Mensagem de erro, se houver
         }
         return render(request, 'mechanic_dashboard.html', contexto)
 
     # ROTA DO DONO - Se for Dono, direciona para a visão gerencial
     elif request.user.role == 'DONO':
-        return render(request, 'owner_dashboard.html')
+        
+        # Se o dono preencheu o formulário do pop-up "Nova Oficina"
+        if request.method == 'POST':
+            nome = request.POST.get('nome')
+            endereco = request.POST.get('endereco')
+            descricao = request.POST.get('descricao')
+            
+            if nome:
+                Workshop.objects.create(
+                    dono=request.user,
+                    nome=nome,
+                    endereco=endereco,
+                    descricao=descricao
+                )
+                # Recarrega a página mantendo a aba de oficinas aberta
+                return redirect('/?tab=oficinas')
+
+        # Busca todas as oficinas que pertencem a este dono
+        minhas_oficinas = Workshop.objects.filter(dono=request.user)
+        
+        contexto = {
+            'oficinas': minhas_oficinas,
+            # Passamos qual aba deve ficar ativa (padrão: oficinas)
+            'aba_ativa': request.GET.get('tab', 'oficinas') 
+        }
+        return render(request, 'owner_dashboard.html', contexto)
         
     # ROTA DO CLIENTE (Proprietário de Veículo) - Se for Cliente, direciona para a visão do cliente
     else:

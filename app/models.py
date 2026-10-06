@@ -7,6 +7,11 @@ from django.db import models
 # (já vem com login, senha, e-mail, etc). Esse modelo é importado para criar o nosso próprio usuário 
 # "turbinado", adicionando novos campos como 'role' (cargo), 'telefone', cnpj, etc.
 from django.contrib.auth.models import AbstractUser
+# Importa o módulo 'random' e 'string' para gerar códigos aleatórios (ex: código de convite da oficina).
+# Eles funcionam assim como o módulo "uuid", no entanto, o uuid gera códigos gigantescos e difíceis de ler, atrapalhando a experiência do usuário.
+# Enquanto que com o random + string, é possível forçar um formato mais curto, amigável e fácil para o usuário.
+import random
+import string
 
 # 1. USUÁRIO CUSTOMIZADO (Tabela que guarda todos que acessam o sistema)
 class User(AbstractUser):
@@ -36,14 +41,26 @@ class User(AbstractUser):
     # related_name='mecanicos_equipe': É um "apelido" para buscarmos todos os mecânicos de uma oficina facilmente.
     oficina_vinculada = models.ForeignKey('Workshop', on_delete=models.SET_NULL, null=True, blank=True, related_name='mecanicos_equipe')
 
-# 2. OFICINA (Tabela que guarda os dados da oficina)
+# 2. MODELO DA OFICINA (Tabela que guarda os dados da oficina)
 class Workshop(models.Model):
-    nome = models.CharField(max_length=100)
-    endereco = models.CharField(max_length=200)
-    descricao = models.TextField(blank=True, null=True) # TextField é para textos grandes, sem limite
-    codigo_convite = models.CharField(max_length=20, unique=True) # unique=True: Garante que não existam dois códigos de convite iguais em toda a plataforma.
-    # on_delete=models.SET_NULL: Se o dono deletar a conta, a oficina continua no sistema, mas sem dono (null).
-    dono = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='oficinas_gerenciadas') 
+    dono = models.ForeignKey(User, on_delete=models.CASCADE, related_name='oficinas_gerenciadas')
+    nome = models.CharField(max_length=150)
+    endereco = models.CharField(max_length=255, blank=True, null=True)
+    descricao = models.TextField(blank=True, null=True)
+    codigo_convite = models.CharField(max_length=15, unique=True, blank=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Se a oficina não tem um código de convite, o sistema cria um automaticamente
+        if not self.codigo_convite:
+            prefixo = "OFC-"
+            # Gera 6 letras/números aleatórios
+            sufixo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            self.codigo_convite = prefixo + sufixo
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nome
 
 # 3. VEÍCULO (Tabela que guarda os veículos dos clientes)
 class Vehicle(models.Model):
@@ -102,7 +119,7 @@ class Maintenance(models.Model):
         # Mostra o carro e o status (Ex: "Honda Civic - Aguard. Aprovação")
         return f"{self.veiculo} - {self.get_status_display()}"
 
-# TABELA PARA A NOTA FISCAL DETALHADA E ORÇAMENTO INTERATIVO
+# 5. TABELA PARA A NOTA FISCAL DETALHADA E ORÇAMENTO INTERATIVO
 class ServiceItem(models.Model):
     # Amarramos este item a uma manutenção específica. Se a manutenção for deletada, 
     # as peças e serviços dela (CASCADE) são apagadas também.
@@ -117,7 +134,7 @@ class ServiceItem(models.Model):
     def __str__(self):
         return f"{self.descricao} - R$ {self.preco}"
 
-# 5. ITENS DO ORÇAMENTO (Tabela Alternativa)
+# 6. ITENS DO ORÇAMENTO (Tabela Alternativa)
 # Essa tabela tem um funcionamento semelhante ao ServiceItem, 
 # no entanto, não possui os campos interativos de 'aprovado' e 'obrigatorio'.
 class MaintenanceItem(models.Model):
@@ -125,7 +142,7 @@ class MaintenanceItem(models.Model):
     nome_servico = models.CharField(max_length=100)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
 
-# 6. Notificações
+# 7. Notificações
 class Notification(models.Model):
     # Para qual usuário a notificação vai (pro dono, pro cliente, ou pro mecânico)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificacoes')

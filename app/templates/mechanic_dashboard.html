@@ -9,90 +9,118 @@
     <div style="max-width: 800px; margin: 0 auto;">
         <div style="text-align: center;">
             <h1 style="color: #f39c12;">Painel de Serviços 🔧</h1>
-            <p>Bem-vindo, <strong>{{ user.first_name }}</strong>!</p>
+            <p>Bem-vindo, <strong>{{ user.first_name }}</strong>!
+                <!-- Mostra o nome da equipe se ele já estiver vinculado -->
+                {% if request.user.oficina_vinculada %}
+                    <br><span style="color: #2ecc71; font-size: 14px;">🏢 Equipe: {{ request.user.oficina_vinculada.nome }}</span>
+                {% endif %}
+            </p>
         </div>
         
-        <h3 style="color: #3498db; margin-top: 40px; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Fila de Espera (Aguardando Atendimento)</h3>
-
-        {% if solicitacoes %}
-            <ul style="list-style-type: none; padding: 0;">
-            {% for solicitacao in solicitacoes %}
-                <li style="background-color: #34495e; padding: 20px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #e74c3c;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong style="font-size: 18px; color: #f1c40f;">{{ solicitacao.veiculo }}</strong><br>
-                            <span style="font-size: 14px; color: #bdc3c7;">Proprietário: {{ solicitacao.veiculo.proprietario.first_name }} | Tel: {{ solicitacao.veiculo.proprietario.telefone }}</span><br><br>
-                            
-                            <strong>Tipo:</strong> {{ solicitacao.get_tipo_display }} <br>
-                            <strong>Problema Relatado:</strong> {{ solicitacao.descricao_problema }} <br>
-                            <strong>Data:</strong> {{ solicitacao.criado_em|date:"d/m/Y" }} às {{ solicitacao.criado_em|date:"H:i" }}
-                        </div>
-                        
-                        <div>
-                            <!-- Formulário seguro apontando para a nova rota -->
-                            <form action="{% url 'accept_maintenance' solicitacao.id %}" method="POST">
-                                {% csrf_token %}
-                                <button type="submit" style="padding: 10px 20px; background-color: #2ecc71; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s;">
-                                    Aceitar Serviço
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <div style="margin-top: 20px; padding: 30px; background-color: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
-                <p>Nenhum veículo aguardando manutenção no momento. Tudo tranquilo!</p>
+        <!-- SE O MECÂNICO NÃO TEM OFICINA: MOSTRA A TELA DE CONVITE -->
+        {% if not request.user.oficina_vinculada %}
+            <div style="margin-top: 40px; padding: 40px; background-color: #34495e; border-radius: 8px; text-align: center; border-left: 5px solid #f39c12;">
+                <h2 style="color: #f39c12; margin-top: 0;">Vincular Oficina</h2>
+                <p>Você ainda não faz parte de nenhuma equipe. Digite o código de convite fornecido pelo dono da oficina.</p>
+                
+                <form method="POST" style="max-width: 400px; margin: 20px auto 0;">
+                    {% csrf_token %}
+                    {% if erro %}
+                        <span style="color: #e74c3c; font-size: 14px; margin-bottom: 15px; display: block; font-weight: bold;">{{ erro }}</span>
+                    {% endif %}
+                    <input type="text" name="codigo_convite" placeholder="EX: OFC-A1B2C3" required autocomplete="off" style="width: 100%; box-sizing: border-box; padding: 15px; background-color: #2c3e50; border: 1px solid #7f8c8d; color: white; border-radius: 5px; font-size: 18px; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">
+                    <button type="submit" style="padding: 15px; background-color: #f39c12; color: white; border: none; border-radius: 5px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px;">
+                        Entrar na Equipe
+                    </button>
+                </form>
             </div>
-        {% endif %}
 
-        <!-- SERVIÇOS EM ANDAMENTO -->
-        <h3 style="color: #cf9425; margin-top: 50px; border-bottom: 2px solid #cf9425; padding-bottom: 10px;">Meus Serviços em Andamento 🛠️</h3>
-
-        {% if meus_servicos %}
-            <ul style="list-style-type: none; padding: 0;">
-            {% for servico in meus_servicos %}
-                <li style="background-color: #34495e; padding: 20px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #cf9425;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong style="font-size: 18px; color: #f1c40f;">{{ servico.veiculo }}</strong><br>
-                            <span style="font-size: 14px; color: #bdc3c7;">Proprietário: {{ servico.veiculo.proprietario.first_name }} | Tel: {{ servico.veiculo.proprietario.telefone }}</span><br><br>
-                            
-                            <strong>Problema Relatado:</strong> {{ servico.descricao_problema }} <br>
-                            {% if servico.data_aceite %}
-                                <strong>Aceite em:</strong> {{ servico.data_aceite|date:"d/m/Y" }} às {{ servico.data_aceite|date:"H:i" }} <br>
-                            {% endif %}
-                        </div>
-                        
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
-                            <!-- Mostra o status atual para o mecânico saber em que pé está -->
-                            <span style="background-color: #7f8c8d; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-                                Status: {{ servico.get_status_display }}
-                            </span>
-
-                            <!-- SE ACABOU DE ACEITAR: Botão de Vistoria -->
-                            {% if servico.status == 'ACEITA' %}
-                                <a href="{% url 'realizar_vistoria' servico.id %}" style="display: inline-block; padding: 10px 20px; background-color: #e67e22; color: white; border: none; border-radius: 5px; font-weight: bold; text-decoration: none; text-align: center;">
-                                    Realizar Vistoria
-                                </a>
-                            
-                            <!-- SE O CLIENTE APROVOU: Botão de Concluir Serviço -->
-                            {% elif servico.status == 'ANDAMENTO' %}
-                                <a href="{% url 'finish_maintenance' servico.id %}" style="display: inline-block; padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 5px; font-weight: bold; text-decoration: none; text-align: center;">
-                                    Concluir Serviço
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </li>
-            {% endfor %}
-            </ul>
+        <!-- SE O MECÂNICO JÁ TEM OFICINA: MOSTRA O PAINEL DE SERVIÇOS ORIGINAL -->
         {% else %}
-            <div style="margin-top: 20px; padding: 30px; background-color: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
-                <p>Você não tem nenhum serviço em andamento no momento.</p>
-            </div>
-        {% endif %}
+
+            <h3 style="color: #3498db; margin-top: 40px; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Fila de Espera (Aguardando Atendimento)</h3>
+
+            {% if solicitacoes %}
+                <ul style="list-style-type: none; padding: 0;">
+                {% for solicitacao in solicitacoes %}
+                    <li style="background-color: #34495e; padding: 20px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #e74c3c;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 18px; color: #f1c40f;">{{ solicitacao.veiculo }}</strong><br>
+                                <span style="font-size: 14px; color: #bdc3c7;">Proprietário: {{ solicitacao.veiculo.proprietario.first_name }} | Tel: {{ solicitacao.veiculo.proprietario.telefone }}</span><br><br>
+                                
+                                <strong>Tipo:</strong> {{ solicitacao.get_tipo_display }} <br>
+                                <strong>Problema Relatado:</strong> {{ solicitacao.descricao_problema }} <br>
+                                <strong>Data:</strong> {{ solicitacao.criado_em|date:"d/m/Y" }} às {{ solicitacao.criado_em|date:"H:i" }}
+                            </div>
+                            
+                            <div>
+                                <!-- Formulário seguro apontando para a nova rota -->
+                                <form action="{% url 'accept_maintenance' solicitacao.id %}" method="POST">
+                                    {% csrf_token %}
+                                    <button type="submit" style="padding: 10px 20px; background-color: #2ecc71; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s;">
+                                        Aceitar Serviço
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <div style="margin-top: 20px; padding: 30px; background-color: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
+                    <p>Nenhum veículo aguardando manutenção no momento. Tudo tranquilo!</p>
+                </div>
+            {% endif %}
+
+            <!-- SERVIÇOS EM ANDAMENTO -->
+            <h3 style="color: #cf9425; margin-top: 50px; border-bottom: 2px solid #cf9425; padding-bottom: 10px;">Meus Serviços em Andamento 🛠️</h3>
+
+            {% if meus_servicos %}
+                <ul style="list-style-type: none; padding: 0;">
+                {% for servico in meus_servicos %}
+                    <li style="background-color: #34495e; padding: 20px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #cf9425;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 18px; color: #f1c40f;">{{ servico.veiculo }}</strong><br>
+                                <span style="font-size: 14px; color: #bdc3c7;">Proprietário: {{ servico.veiculo.proprietario.first_name }} | Tel: {{ servico.veiculo.proprietario.telefone }}</span><br><br>
+                                
+                                <strong>Problema Relatado:</strong> {{ servico.descricao_problema }} <br>
+                                {% if servico.data_aceite %}
+                                    <strong>Aceite em:</strong> {{ servico.data_aceite|date:"d/m/Y" }} às {{ servico.data_aceite|date:"H:i" }} <br>
+                                {% endif %}
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                                <!-- Mostra o status atual para o mecânico saber em que pé está -->
+                                <span style="background-color: #7f8c8d; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                                    Status: {{ servico.get_status_display }}
+                                </span>
+
+                                <!-- SE ACABOU DE ACEITAR: Botão de Vistoria -->
+                                {% if servico.status == 'ACEITA' %}
+                                    <a href="{% url 'realizar_vistoria' servico.id %}" style="display: inline-block; padding: 10px 20px; background-color: #e67e22; color: white; border: none; border-radius: 5px; font-weight: bold; text-decoration: none; text-align: center;">
+                                        Realizar Vistoria
+                                    </a>
+                                
+                                <!-- SE O CLIENTE APROVOU: Botão de Concluir Serviço -->
+                                {% elif servico.status == 'ANDAMENTO' %}
+                                    <a href="{% url 'finish_maintenance' servico.id %}" style="display: inline-block; padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 5px; font-weight: bold; text-decoration: none; text-align: center;">
+                                        Concluir Serviço
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <div style="margin-top: 20px; padding: 30px; background-color: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
+                    <p>Você não tem nenhum serviço em andamento no momento.</p>
+                </div>
+            {% endif %}
+
+        {% endif %} <!-- FIM DO BLOCO IF DA OFICINA -->
 
         <div style="margin-top: 40px; text-align: center;">
             <form action="{% url 'logout' %}" method="POST" style="display: inline;">
