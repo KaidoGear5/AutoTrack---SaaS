@@ -34,7 +34,8 @@
         .kpi-concluido span, .kpi-concluido h2 { color: #10b981; }
         .kpi-concluido .kpi-icon { border: 1px solid #10b981; color: #10b981; }
 
-        /* Abas de Navegação */
+        /* Abas de Navegação e Barra de Ação */
+        .action-bar-right { margin-bottom: 20px; text-align: right; }
         .tabs { display: flex; background-color: #222630; border-radius: 8px; padding: 5px; margin-bottom: 30px; border: 1px solid #2d3340; }
         .tab-btn { flex: 1; text-align: center; padding: 12px; color: #a9b1bd; text-decoration: none; border-radius: 6px; font-weight: bold; transition: 0.3s; }
         .tab-btn:hover { background-color: #2d3340; color: white; }
@@ -45,6 +46,7 @@
         .section-header h3 { color: white; margin: 0; }
         .btn-orange { background-color: #ff7b00; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; }
         .btn-orange:hover { background-color: #e66e00; }
+        .btn-full { width: 100%; margin-top: 10px; }
 
         .oficina-card { background-color: #222630; padding: 25px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3340; }
         .oficina-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
@@ -56,17 +58,37 @@
         .codigo-box span { font-size: 12px; display: block; margin-bottom: 5px; }
         .codigo-box strong { color: #ff7b00; font-size: 18px; letter-spacing: 1px; }
 
-        /* Modal / Pop-up Nova Oficina */
+        /* Modais / Pop-ups */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background-color: #222630; padding: 30px; border-radius: 12px; width: 450px; border: 1px solid #2d3340; position: relative; }
+        .modal-content-large { width: 500px; max-height: 90vh; overflow-y: auto; }
         .modal-content h3 { color: white; margin-top: 0; margin-bottom: 5px; }
         .modal-content p { font-size: 13px; margin-bottom: 20px; }
+        
+        /* Formulários */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: white; }
         .form-control { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; }
         .form-control:focus { outline: none; border-color: #ff7b00; }
+        .form-row { display: flex; gap: 10px; }
+        .form-col { flex: 1; }
+        .form-col-2 { flex: 2; }
+        .form-section-title { color: #ff7b00; margin-bottom: 10px; margin-top: 15px; border-bottom: 1px solid #2d3340; padding-bottom: 5px; font-size: 16px; }
+        .text-uppercase { text-transform: uppercase; }
+        
         .close-btn { position: absolute; right: 20px; top: 20px; color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; }
         .close-btn:hover { color: white; }
+
+        /* Aba de Solicitações */
+        .solicitacao-card { background-color: #222630; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3340; display: flex; justify-content: space-between; align-items: center; }
+        .solicitacao-info h4 { color: #f1c40f; margin: 0 0 8px 0; font-size: 18px; }
+        .solicitacao-info p { margin: 4px 0; font-size: 13px; color: #a9b1bd; }
+        .solicitacao-info strong { color: white; }
+        .badge-status { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .status-PENDENTE { background-color: rgba(255, 184, 0, 0.1); color: #ffb800; border: 1px solid #ffb800; }
+        .status-ANDAMENTO, .status-ACEITA, .status-AGUARDANDO_APROVACAO { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid #3b82f6; }
+        .status-CONCLUIDO { background-color: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; }
+        .status-RECUSADA { background-color: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; }
     </style>
 </head>
 <body>
@@ -96,19 +118,24 @@
         <div class="kpi-row">
             <div class="kpi-card kpi-pendente">
                 <span>Pendentes</span>
-                <h2>0</h2>
+                <h2>{{ total_pendentes }}</h2>
                 <div class="kpi-icon">!</div>
             </div>
             <div class="kpi-card kpi-andamento">
                 <span>Em Andamento</span>
-                <h2>0</h2>
+                <h2>{{ total_andamento }}</h2>
                 <div class="kpi-icon">🕒</div>
             </div>
             <div class="kpi-card kpi-concluido">
                 <span>Concluídos</span>
-                <h2>0</h2>
+                <h2>{{ total_concluidos }}</h2>
                 <div class="kpi-icon">✓</div>
             </div>
+        </div>
+
+        <!-- Botões de Ação Rápida -->
+        <div class="action-bar-right">
+            <button class="btn-orange" onclick="abrirModalAtendimento()">+ Novo Atendimento</button>
         </div>
 
         <!-- Abas de Navegação -->
@@ -149,7 +176,7 @@
                             <span style="color: #10b981;">👥 {{ oficina.mecanicos_equipe.count }} mecânico(s) vinculado(s)</span>
                             <button onclick="abrirModalEquipe('{{ oficina.id }}')" style="background: none; border: none; color: #ff7b00; cursor: pointer; text-decoration: underline; font-weight: bold;">Ver Equipe</button>
                         {% else %}
-                            <span>👥 Nenhum mecânico vinculado ainda.</span>
+                            <span>Nenhum mecânico vinculado ainda.</span>
                         {% endif %}
                     </div>
                 </div>
@@ -188,6 +215,105 @@
             {% endfor %}
         {% endif %}
 
+        <!-- CONTEÚDO DA ABA SOLICITAÇÕES -->
+        {% if aba_ativa == 'solicitacoes' %}
+            <div class="section-header">
+                <div>
+                    <h3>Todas as Solicitações</h3>
+                    <span style="font-size: 13px;">Acompanhe o fluxo de serviço das suas oficinas em tempo real.</span>
+                </div>
+            </div>
+
+            {% for solicitacao in solicitacoes %}
+                <div class="solicitacao-card">
+                    <div class="solicitacao-info">
+                        <h4>{{ solicitacao.veiculo }}</h4>
+                        <p><strong>Cliente:</strong> {{ solicitacao.veiculo.proprietario.first_name }} | <strong>Tel:</strong> {{ solicitacao.veiculo.proprietario.telefone|default:"Não informado" }}</p>
+                        <p><strong>Oficina:</strong> {{ solicitacao.oficina.nome }}</p>
+                        <p><strong>Problema:</strong> {{ solicitacao.descricao_problema }}</p>
+                        <p><strong>Data de Entrada:</strong> {{ solicitacao.criado_em|date:"d/m/Y" }} às {{ solicitacao.criado_em|date:"H:i" }}</p>
+                    </div>
+                    
+                    <div style="text-align: right;">
+                        <div class="badge-status status-{{ solicitacao.status }}">
+                            {{ solicitacao.get_status_display }}
+                        </div>
+                        
+                        <p style="font-size: 13px; margin-top: 15px;">
+                            <strong>Mecânico:</strong> 
+                            {% if solicitacao.mecanico %}
+                                <span style="color: #10b981;">{{ solicitacao.mecanico.first_name }}</span>
+                            {% else %}
+                                <span style="color: #ffb800;">Aguardando na Fila...</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="text-align: center; padding: 50px 0; color: #a9b1bd;">
+                    <p>Nenhuma solicitação encontrada no momento.</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+    </div>
+
+    <!-- Modal Novo Atendimento (Balcão) -->
+    <div id="modalAtendimento" class="modal">
+        <div class="modal-content modal-content-large">
+            <span class="close-btn" onclick="fecharModalAtendimento()">&times;</span>
+            <h3>Novo Atendimento</h3>
+            <p>Registre a entrada de um veículo e crie o cadastro do cliente automaticamente.</p>
+            
+            <form method="POST" action="{% url 'atendimento_balcao' %}">
+                {% csrf_token %}
+                
+                <h4 class="form-section-title">Dados do Veículo</h4>
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Placa *</label>
+                        <input type="text" name="placa" class="form-control text-uppercase" placeholder="ABC1234" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Ano</label>
+                        <input type="number" name="ano" class="form-control" placeholder="2020">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Marca *</label>
+                        <input type="text" name="marca" class="form-control" placeholder="Ex: Honda" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Modelo *</label>
+                        <input type="text" name="modelo" class="form-control" placeholder="Ex: Civic" required>
+                    </div>
+                </div>
+
+                <h4 class="form-section-title">Dados do Cliente</h4>
+                <div class="form-group">
+                    <label>Nome Completo *</label>
+                    <input type="text" name="nome_cliente" class="form-control" placeholder="Nome do proprietário" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group form-col-2">
+                        <label>E-mail * (Usado para login)</label>
+                        <input type="email" name="email_cliente" class="form-control" placeholder="cliente@email.com" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Telefone</label>
+                        <input type="text" name="telefone_cliente" class="form-control" placeholder="(11) 99999-9999">
+                    </div>
+                </div>
+
+                <h4 class="form-section-title">Problema Relatado</h4>
+                <div class="form-group">
+                    <textarea name="descricao_problema" class="form-control" rows="3" placeholder="Descreva o que o cliente informou..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn-orange btn-full">Salvar e Abrir Ordem de Serviço</button>
+            </form>
+        </div>
     </div>
 
     <!-- Modal Nova Oficina -->
@@ -196,8 +322,7 @@
             <span class="close-btn" onclick="fecharModal()">&times;</span>
             <h3>Nova Oficina</h3>
             <p>Crie uma nova oficina e convide mecânicos</p>
-            
-            <!-- A ação do form envia os dados para a home, mantendo a aba oficinas -->
+            <!-- A ação do formulário envia para a página home com a aba de oficinas ativa, para que o usuário veja a oficina criada imediatamente. -->
             <form method="POST" action="{% url 'home' %}?tab=oficinas">
                 {% csrf_token %}
                 <div class="form-group">
@@ -212,7 +337,7 @@
                     <label>Descrição</label>
                     <textarea name="descricao" class="form-control" rows="3" placeholder="Especialidades e serviços oferecidos..."></textarea>
                 </div>
-                <button type="submit" class="btn-orange" style="width: 100%; margin-top: 10px;">Criar Oficina</button>
+                <button type="submit" class="btn-orange btn-full">Criar Oficina</button>
             </form>
         </div>
     </div>
@@ -225,6 +350,10 @@
         /* Funções do modal de Ver Equipe */
         function abrirModalEquipe(id) { document.getElementById('modalEquipe-' + id).style.display = 'flex'; }
         function fecharModalEquipe(id) { document.getElementById('modalEquipe-' + id).style.display = 'none'; }
+
+        /* Funções do modal de Novo Atendimento */
+        function abrirModalAtendimento() { document.getElementById('modalAtendimento').style.display = 'flex'; }
+        function fecharModalAtendimento() { document.getElementById('modalAtendimento').style.display = 'none'; }
     </script>
 </body>
 </html>

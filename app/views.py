@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 # login_required: É um "cadeado". Se o usuário não estiver logado, não deixa acessar a função e manda pra tela de login.
 from django.contrib.auth.decorators import login_required
 # São importadas as classes que criamos no models.py (Vehicle, Maintenance e ServiceItem) para manipular os dados do banco de dados.
-from .models import Vehicle, Maintenance, ServiceItem, Workshop
+from .models import User, Vehicle, Maintenance, ServiceItem, Workshop
 # São importados os formulários que criados no forms.py para manipular os dados do usuário.
 from .forms import VehicleForm, CustomUserCreationForm, MaintenanceForm, FinishMaintenanceForm, VistoriaForm
 from django.contrib.auth import login # Ferramenta para forçar o login automático após o cadastro
@@ -72,10 +72,24 @@ def home(request):
         # Busca todas as oficinas que pertencem a este dono
         minhas_oficinas = Workshop.objects.filter(dono=request.user)
         
+        # --- CONTAGEM DE KPIs ---
+        # 1. Filtra as manutenções usando as oficinas do dono
+        manutencoes_do_dono = Maintenance.objects.filter(oficina__in=minhas_oficinas).order_by('-criado_em')
+        # 2. Conta os Pendentes (status PENDENTE)
+        total_pendentes = manutencoes_do_dono.filter(status='PENDENTE').count()
+        # 3. Conta os Em Andamento (incluindo ACEITA, AGUARDANDO_APROVACAO e ANDAMENTO)
+        total_andamento = manutencoes_do_dono.filter(status__in=['ACEITA', 'AGUARDANDO_APROVACAO', 'ANDAMENTO']).count()
+        # 4. Conta os Concluídos (status CONCLUIDO)
+        total_concluidos = manutencoes_do_dono.filter(status='CONCLUIDO').count()
+
+        # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
             'oficinas': minhas_oficinas,
-            # Passamos qual aba deve ficar ativa (padrão: oficinas)
-            'aba_ativa': request.GET.get('tab', 'oficinas') 
+            'aba_ativa': request.GET.get('tab', 'oficinas'),
+            'total_pendentes': total_pendentes, # Envia os Pendentes pro HTML
+            'total_andamento': total_andamento, # Envia os Em Andamento pro HTML
+            'total_concluidos': total_concluidos, # Envia os Concluídos pro HTML
+            'solicitacoes': manutencoes_do_dono # Envia todas as solicitações de manutenção do dono para o HTML, para mostrar na aba de solicitações
         }
         return render(request, 'owner_dashboard.html', contexto)
         
@@ -190,6 +204,74 @@ def request_maintenance(request):
         
     contexto = {'form': form}
     return render(request, 'request_maintenance.html', contexto)
+
+# ATENDIMENTO NO BALCÃO (OFICINA REGISTRA MANUTENÇÃO)
+@login_required(login_url='login')
+def atendimento_balcao(request):
+    if request.method == 'POST':
+        oficina_atual = None # Identifica de qual oficina está vindo o pedido
+        if request.user.role == 'DONO':
+            oficina_atual = request.user.oficinas_gerenciadas.first() # Pega a primeira oficina que o dono gerencia
+        elif request.user.role == 'MECANICO':
+            oficina_atual = request.user.oficina_vinculada # Pega a oficina que o mecânico está vinculado
+            
+        if not oficina_atual:
+            return redirect('home') # Se por algum motivo não tiver oficina, aborta a missão
+
+        # Coleta os dados do formulário HTML que forem preenchidos na oficina
+        nome_cliente = request.POST.get('nome_cliente')
+        email_cliente = request.POST.get('email_cliente')
+        telefone_cliente = request.POST.get('telefone_cliente')
+
+        placa = request.POST.get('placa').upper() # Garante que a placa fique maiúscula
+        marca = request.POST.get('marca')
+        modelo = request.POST.get('modelo')
+        ano = request.POST.get('ano', 2020) # 2020 como padrão se não preencherem
+        descricao_problema = request.POST.get('descricao_problema')
+        tipo_servico = request.POST.get('tipo', 'CORRETIVA') # Corretiva por padrão
+
+        # --- O CLIENTE (SILENT ONBOARDING) ---
+        cliente = User.objects.filter(email=email_cliente).first()
+        
+        if not cliente:
+            # Se o e-mail não existe, cria a conta do cliente silenciosamente
+            # O Django vai usar o e-mail como login e a placa do carro como senha inicial
+            cliente = User.objects.create_user(
+                username=email_cliente, 
+                email=email_cliente,
+                password=placa, 
+                first_name=nome_cliente,
+                telefone=telefone_cliente,
+                role='CLIENTE'
+            )
+
+        # --- O VEÍCULO ---
+        veiculo = Vehicle.objects.filter(placa=placa).first()
+        
+        if not veiculo:
+            # Cria o carro e já vincula ao proprietário (cliente) que foi criado anteriormente
+            veiculo = Vehicle.objects.create(
+                placa=placa,
+                marca=marca,
+                modelo=modelo,
+                ano=ano,
+                proprietario=cliente
+            )
+
+        # --- A ORDEM DE SERVIÇO ---
+        # Abre o chamado já amarrado à oficina exata de quem registrou!
+        Maintenance.objects.create(
+            veiculo=veiculo,
+            oficina=oficina_atual,
+            descricao_problema=descricao_problema,
+            tipo=tipo_servico,
+            status='PENDENTE' # Cai direto na fila de espera desta oficina
+        )
+
+        # Volta para a página inicial (que vai recarregar o dashboard do Dono ou Mecânico atualizado)
+        return redirect('home')
+        
+    return redirect('home')
 
 # MECÂNICO ACEITAR O SERVIÇO
 @login_required(login_url='login')

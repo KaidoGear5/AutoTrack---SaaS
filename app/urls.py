@@ -27,4 +27,6 @@ urlpatterns = [
     # Rota para o cliente aprovar ou recusar a vistoria
     path('aprovar-vistoria/<int:id>/', views.aprovar_vistoria, name='aprovar_vistoria'),
     path('recusar-vistoria/<int:id>/', views.recusar_vistoria, name='recusar_vistoria'),
+    # Rota do atendimento no balcão (oficina registra manutenção)
+    path('novo-atendimento/', views.atendimento_balcao, name='atendimento_balcao'),
 ]
