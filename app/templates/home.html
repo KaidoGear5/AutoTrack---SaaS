@@ -2,198 +2,655 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoTrack - Início</title>
+    <title>AutoTrack - Painel do Cliente</title>
+    <style>
+        /* Base do Dark Mode */
+        body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        
+        /* TEMA CLARO (Overrides)                    */
+        body.light-theme { background-color: #f4f6f8; color: #4b5563; }
+
+        body.light-theme .navbar, body.light-theme .card, body.light-theme .diag-box, 
+        body.light-theme .convite-box, body.light-theme .modal-content, 
+        body.light-theme .notification-sidebar, body.light-theme .notification-item {
+        background-color: #ffffff; border-color: #e5e7eb;
+        }
+
+        body.light-theme h1, body.light-theme h2, body.light-theme h3, 
+        body.light-theme h4, body.light-theme strong, body.light-theme .user-text strong, 
+        body.light-theme .sidebar-header h3, body.light-theme .form-section-title {
+        color: #1f2937;
+        }
+
+        body.light-theme .form-group label, body.light-theme .card-info p, body.light-theme .history-info p { color: #4b5563; }
+        body.light-theme .form-control { color: #1f2937; background-color: #f9fafb; border-color: #d1d5db; }
+        body.light-theme .form-control:focus { border-color: #f39c12; }
+
+        body.light-theme .close-btn, body.light-theme .nav-actions button { color: #6b7280; }
+        body.light-theme .close-btn:hover, body.light-theme .nav-actions button:hover { color: #1f2937; }
+        body.light-theme .notification-item { background-color: #f9fafb; }
+
+        /* Força a cor do texto nos Modais do Tema Claro (Ignora estilos inline) */
+        body.light-theme .modal-content h3,
+        body.light-theme .modal-content h4,
+        body.light-theme .modal-content strong {
+            color: #1f2937 !important;
+        }
+        
+        body.light-theme .modal-content p {
+            color: #6b7280 !important;
+        }
+
+        /* CORREÇÕES DE LEITURA E CONTRASTE */
+        /* Força a cor do texto para cinza escuro nas listas, parágrafos e spans */
+        body.light-theme .card p,
+        body.light-theme .card span:not(.badge-status),
+        body.light-theme .diag-box p,
+        body.light-theme .diag-box span:not(.badge-status),
+        body.light-theme .item-list span,
+        body.light-theme .history-info p {
+            color: #4b5563 !important;
+        }
+
+        /* Textos em negrito (strong) ficam bem escuros para leitura nítida */
+        body.light-theme .card strong,
+        body.light-theme .diag-box strong {
+            color: #1f2937 !important;
+        }
+
+        /* Protege as cores Verde (Sucesso), Laranja (Alerta) e Vermelho (Obrigatório) nos textos */
+        body.light-theme strong[style*="#2ecc71"],
+        body.light-theme span[style*="#2ecc71"] { color: #10b981 !important; }
+        body.light-theme strong[style*="#f39c12"],
+        body.light-theme span[style*="#f39c12"] { color: #d97706 !important; }
+        body.light-theme span[style*="#e74c3c"] { color: #dc2626 !important; }
+
+        /* Substitui os fundos pretos (inline) por caixas cinza-claras super legíveis */
+        body.light-theme div[style*="background-color: #1a1d24"],
+        body.light-theme div[style*="background-color: #111318"],
+        body.light-theme div[style*="background-color: rgba(0,0,0,0.2)"] {
+            background-color: #f3f4f6 !important;
+            border: 1px solid #e5e7eb !important;
+        }
+
+        /* Corrige a cor do texto das notificações no Tema Claro */
+        body.light-theme .notification-item p {
+            color: #1f2937 !important;
+        }
+        body.light-theme .notification-item small {
+        color: #6b7280 !important;
+        }
+        
+        /* Navbar Superior */
+        .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; background-color: #3498db; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .user-text strong { color: white; display: block; font-size: 16px; }
+        .user-text span { font-size: 12px; }
+        .nav-actions { display: flex; align-items: center; }
+        .nav-actions a { color: #a9b1bd; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .nav-actions a:hover { color: white; }
+
+        /* Container Principal e Layout */
+        .container { padding: 30px 40px; max-width: 1200px; margin: 0 auto; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #2d3340; }
+        .section-header h2 { color: white; margin: 0; }
+        
+        /* Botões */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; font-family: inherit;}
+        .btn-green { background-color: #2ecc71; color: white; }
+        .btn-green:hover { background-color: #27ae60; }
+        .btn-orange { background-color: #f39c12; color: white; }
+        .btn-orange:hover { background-color: #e67e22; }
+        .btn-red { background-color: #e74c3c; color: white; }
+        .btn-red:hover { background-color: #c0392b; }
+        .btn-outline { background-color: transparent; border: 1px solid #3498db; color: #3498db; }
+        .btn-outline:hover { background-color: #3498db; color: white; }
+        .btn-outline-red { background-color: transparent; border: 1px solid #e74c3c; color: #e74c3c; }
+        .btn-outline-red:hover { background-color: #e74c3c; color: white; }
+
+        /* Formulários (Dentro dos Modais) */
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: white; }
+        .form-control { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit;}
+        .form-control:focus { outline: none; border-color: #3498db; }
+        .form-row { display: flex; gap: 10px; }
+        .form-col { flex: 1; }
+
+        /* Cartões de Veículos e Histórico */
+        .card { background-color: #222630; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3340; }
+        .card-vehicle { display: flex; justify-content: space-between; align-items: center; }
+        .card-vehicle h4 { color: white; font-size: 18px; margin: 0 0 5px 0; }
+        .card-vehicle p { margin: 0; font-size: 13px; }
+        
+        .card-history { border-left: 5px solid #f39c12; }
+        .card-history strong { color: white; }
+        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .history-info p { margin: 5px 0; font-size: 14px; }
+        
+        .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; background-color: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; }
+
+        /* Blocos de Orçamento e Conclusão */
+        .diag-box { margin-top: 15px; padding: 15px; border-radius: 8px; background-color: #1a1d24; border: 1px solid #2d3340; }
+        .diag-box.aprovacao { border-left: 4px solid #f39c12; }
+        .diag-box.concluido { border-left: 4px solid #2ecc71; }
+        
+        .item-list { list-style-type: none; padding: 0; margin-top: 10px; font-size: 14px; }
+        .item-list li { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #7f8c8d; padding-bottom: 8px; }
+        
+        /* SIDEBAR DE NOTIFICAÇÕES (Barra Lateral) */
+        .notification-sidebar { position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; background-color: #222630; border-left: 1px solid #2d3340; box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: right 0.3s ease; z-index: 2000; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .notification-sidebar.open { right: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; padding-bottom: 15px; margin-bottom: 15px; }
+        .sidebar-header h3 { margin: 0; color: white; display: flex; align-items: center; gap: 10px; }
+        .close-sidebar { background: none; border: 1px solid #f39c12; border-radius: 4px; color: #f39c12; font-size: 16px; cursor: pointer; padding: 2px 8px; }
+        .close-sidebar:hover { background-color: #f39c12; color: white; }
+        .notification-list { flex: 1; overflow-y: auto; }
+        .notification-item { background-color: #1a1d24; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #2d3340; position: relative; }
+        .notification-item.nao-lida { padding-left: 25px; border-left: 4px solid #f39c12; }
+        .notification-item p { margin: 0 0 5px 0; font-size: 13px; color: white; }
+        .notification-item small { font-size: 11px; color: #a9b1bd; }
+
+        /* Indicador de Notificação no Botão */
+        .badge-notificacao { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; border: 2px solid #222630; }
+
+        /* Modais / Pop-ups */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 3000; }
+        .modal-content { background-color: #222630; border-radius: 12px; width: 450px; max-width: 90%; border: 1px solid #2d3340; position: relative; padding: 30px; text-align: left;}
+        .close-btn { color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; position: absolute; right: 20px; top: 20px;}
+        .close-btn:hover { color: white; }
+    </style>
 </head>
-<body style="background-color: #f4f4f9; font-family: Arial, sans-serif; padding: 50px;">
+<body>
 
-    <h1 style="color: #2c3e50;">Bem-vindo ao AutoTrack!</h1>
-<hr style="margin-top: 40px; border: 1px solid #34495e;">
-
-    <!-- Mini formulário disfarçado de botão para o Logout seguro -->
-    <form action="{% url 'logout' %}" method="post" style="margin-top: 30px; margin-bottom: 20px;">
-        {% csrf_token %}
-        <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-            Sair
-        </button>
-    </form>
-
-    <a href="{% url 'add_vehicle' %}" style="display: inline-block; padding: 10px 20px; background-color: #2ecc71; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-        + Cadastrar Novo Veículo
-    </a>
-    <a href="{% url 'request_maintenance' %}" style="padding: 10px 15px; background-color: #e67e22; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-left: 10px;">
-        + Registrar Problema
-    </a>
-<hr style="margin-top: 30px; border: 1px solid #7f8c8d;">
-    
-    <h2 style="color: #3498db;">Meus Veículos Cadastrados:</h2>
-    
-    <ul>
-        {% for carro in carros_para_tela %}
-           <li style="margin-bottom: 15px;">
-             <strong>{{ carro.marca }} {{ carro.modelo }}</strong> - Placa: {{ carro.placa }}
-            <br>
-            <!-- Botões de Ação com o ID dinâmico -->
-            <a href="{% url 'edit_vehicle' carro.id %}" style="display: inline-block; padding: 5px 10px; background-color: #f39c12; color: white; text-decoration: none; border-radius: 3px; font-size: 14px; margin-top: 5px;">
-                Editar
-            </a>
+    <!-- Navbar Superior -->
+    <div class="navbar">
+        <div class="user-info">
+            <div class="avatar">{{ request.user.first_name|first|default:"C" }}</div>
+            <div class="user-text">
+                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                <span>Cliente · AutoTrack</span>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button id="theme-toggle-btn" onclick="toggleTheme()" style="background: none; border: none; font-size: 18px; cursor: pointer; margin-left: 20px;">🌙</button>
+            <button onclick="abrirModal('modalPerfil')" style="background: none; border: none; color: #a9b1bd; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-family: inherit;">👤 Perfil</button>
             
-            <a href="{% url 'delete_vehicle' carro.id %}" style="display: inline-block; padding: 5px 10px; background-color: #e74c3c; color: white; text-decoration: none; border-radius: 3px; font-size: 14px; margin-top: 5px; margin-left: 5px;">
-                Excluir
-            </a>
-        </li>
-        {% empty %}
-            <li style="color: #e74c3c;">Nenhum carro cadastrado no sistema ainda.</li>
-        {% endfor %}
-    </ul>
-    <!-- SEÇÃO DO HISTÓRICO DE MANUTENÇÕES -->
-    <hr style="margin-top: 40px; border: 1px solid #34495e;">
-    <h3 style="color: #3498db;">Meu Histórico de Solicitações</h3>
-
-    {% if manutencoes_para_tela %}
-        <ul style="list-style-type: none; padding: 0;">
-        {% for manutencao in manutencoes_para_tela %}
-            <li style="background-color: #2c3e50; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #f39c12; color: white;">
-                <strong>Veículo:</strong> {{ manutencao.veiculo }} <br>
-                
-                <!-- Adicionado o Tipo e a Data formatada (Dia/Mês/Ano às Hora:Minuto) -->
-                <strong>Tipo:</strong> {{ manutencao.get_tipo_display }} <br> <!-- Usa-se o get_tipo_display para ele escrever "Preventiva" em vez do código de banco de dados -->
-                <strong>Data da Solicitação:</strong> {{ manutencao.criado_em|date:"d/m/Y" }} às {{ manutencao.criado_em|date:"H:i" }} <br> <!-- o filtro |date:"d/m/Y às H:i" para transformar a data feia do sistema (2026-09-25 14:30:00) em "25/09/2026 às 14:30" -->
-                
-                <strong>Problema:</strong> {{ manutencao.descricao_problema }} <br>
-
-                <!-- Se o sistema já vinculou um mecânico, mostra o nome dele -->
-                {% if manutencao.mecanico %}
-                    <strong>Mecânico Responsável:</strong> {{ manutencao.mecanico.first_name }} <br>
-                    <!-- Mostra a data de aceite se ela existir -->
-                    {% if manutencao.data_aceite %}
-                        <strong>Aceite em:</strong> {{ manutencao.data_aceite|date:"d/m/Y" }} às {{ manutencao.data_aceite|date:"H:i" }} <br>
-                    {% endif %}
+            <button onclick="toggleSidebar()" style="background: none; border: none; font-size: 18px; cursor: pointer; position: relative; margin-left: 20px;">
+                🔔
+                {% if notificacoes_nao_lidas > 0 %}
+                    <span class="badge-notificacao">{{ notificacoes_nao_lidas }}</span>
                 {% endif %}
+            </button>
+            
+            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" style="background: none; border: none; color: #a9b1bd; cursor: pointer; font-size: 14px; margin-left: 20px; padding: 0;">Sair</button>
+            </form>
+        </div>
+    </div>
 
-                <!-- SEÇÃO: VISTORIA DO MECÂNICO (AGUARDANDO APROVAÇÃO E ESCOLHA DE ITENS) -->
-                {% if manutencao.status == 'AGUARDANDO_APROVACAO' %}
-                    <div style="margin-top: 15px; padding: 15px; background-color: rgba(243, 156, 18, 0.1); border-radius: 5px; border-left: 4px solid #f39c12;">
-                        <strong style="color: #f39c12;">Diagnóstico do Mecânico:</strong><br>
-                        <span style="font-size: 14px;">{{ manutencao.diagnostico_vistoria|linebreaks }}</span>
-                        
-                        {% if manutencao.imagens_evidencia %}
-                            <div style="margin-top: 10px;">
-                                <a href="{{ manutencao.imagens_evidencia }}" target="_blank" style="background-color: #34495e; color: #3498db; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 12px;">
-                                    📸 Ver Imagem de Evidência
-                                </a>
-                            </div>
-                        {% endif %}
-                        
-                        <hr style="border: 1px solid #f39c12; margin: 15px 0;">
-                        
-                        <!-- FORMULÁRIO DE APROVAÇÃO INTERATIVO -->
-                        <strong style="color: #f39c12;">Orçamento: Selecione os itens que autoriza realizar</strong>
-                        
-                        <form action="{% url 'aprovar_vistoria' manutencao.id %}" method="POST" id="form-aprovacao-{{ manutencao.id }}">
-                            {% csrf_token %}
-                            <ul style="list-style-type: none; padding: 0; margin-top: 10px; font-size: 14px;">
-                                {% for item in manutencao.itens_servico.all %}
-                                    <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #7f8c8d; padding-bottom: 8px;">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            {% if item.obrigatorio %}
-                                                <!-- Mão de obra fica travada (disabled) e envia o ID escondido (hidden) -->
-                                                <input type="hidden" name="itens_aprovados" value="{{ item.id }}">
-                                                <input type="checkbox" checked disabled class="chk-calc-{{ manutencao.id }}" data-preco="{{ item.preco|stringformat:'f' }}">
-                                                <span style="color: #e74c3c; font-weight: bold; text-decoration: underline;">
-                                                    {{ item.descricao }} (Obrigatório)
-                                                </span>
-                                            {% else %}
-                                                <!-- Peças normais começam marcadas, mas o cliente pode desmarcar -->
-                                                <input type="checkbox" name="itens_aprovados" value="{{ item.id }}" checked class="chk-calc-{{ manutencao.id }}" data-preco="{{ item.preco|stringformat:'f' }}" onchange="calcularTotalCliente('{{ manutencao.id }}')">
-                                                <span>{{ item.descricao }}</span>
-                                            {% endif %}
-                                        </div>
-                                        <span>R$ {{ item.preco }}</span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
+    <div class="container">
+        
+        <!-- Ações Principais (Agora abrem Modais) -->
+        <div style="display: flex; gap: 15px; margin-bottom: 40px;">
+            <button onclick="abrirModal('modalCadastrar')" class="btn btn-green">+ Cadastrar Novo Veículo</button>
+            <button onclick="abrirModal('modalProblema')" class="btn btn-orange">+ Registrar Problema</button>
+        </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; margin-bottom: 15px; background-color: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px;">
-                                <strong style="color: #f39c12; font-size: 16px;">Valor Total Aprovado:</strong>
-                                <!-- Mostra o valor inicial ao carregar a tela -->
-                                <strong id="total-display-{{ manutencao.id }}" style="color: #f39c12; font-size: 18px;">R$ {{ manutencao.valor }}</strong>
-                            </div>
-
-                            <div style="display: flex; gap: 10px;">
-                                <button type="submit" style="padding: 8px 15px; background-color: #2ecc71; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
-                                    ✓ Aprovar Selecionados
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <!-- Botão de Rejeitar Todo o Orçamento isolado -->
-                        <form action="{% url 'recusar_vistoria' manutencao.id %}" method="POST" style="margin-top: 10px;">
-                            {% csrf_token %}
-                            <button type="submit" style="padding: 8px 15px; background-color: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">
-                                X Rejeitar Todo o Orçamento
-                            </button>
-                        </form>
-                    </div>
-                {% endif %}
-
-                <!-- SEÇÃO: SERVIÇO CONCLUÍDO COM NOTA FISCAL DETALHADA -->
-                {% if manutencao.status == 'CONCLUIDO' %}
-                    <div style="margin-top: 15px; padding: 15px; background-color: rgba(46, 204, 113, 0.1); border-radius: 5px; border-left: 4px solid #2ecc71;">
-                        <strong style="color: #2ecc71;">Diagnóstico Técnico:</strong><br>
-                        <span style="font-size: 14px;">{{ manutencao.diagnostico|linebreaks }}</span>
-                        
-                        <hr style="border: 1px solid #34495e; margin: 15px 0;">
-                        
-                        <strong style="color: #bdc3c7;">SERVIÇOS E PEÇAS REALIZADOS</strong>
-                        <ul style="list-style-type: none; padding: 0; margin-top: 10px; font-size: 14px;">
-                            {% for item in manutencao.itens_servico.all %}
-                                <!-- NOVO: Só mostra na nota fiscal se o item foi aprovado pelo cliente! -->
-                                {% if item.aprovado %}
-                                <li style="display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #7f8c8d; padding-bottom: 5px;">
-                                    <span>- {{ item.descricao }}</span>
-                                    <span>R$ {{ item.preco }}</span>
-                                </li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                            <strong style="color: #2ecc71; font-size: 16px;">Valor Total:</strong> 
-                            <strong style="font-size: 18px; color: #2ecc71;">R$ {{ manutencao.valor }}</strong>
+        <!-- Seção: Meus Veículos -->
+        <div class="section-header">
+            <h2>Meus Veículos Cadastrados</h2>
+        </div>
+        
+        <div style="margin-bottom: 50px;">
+            {% for carro in carros_para_tela %}
+                <div class="card card-vehicle">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div>
+                            <h4>{{ carro.marca }} {{ carro.modelo }}</h4>
+                            <p><strong>Placa:</strong> <span style="text-transform: uppercase;">{{ carro.placa }}</span></p>
                         </div>
                     </div>
-                {% endif %}
-                
-                <div style="margin-top: 10px;">
-                    <strong>Status:</strong> 
-                    <span style="background-color: #f39c12; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-                        {{ manutencao.get_status_display }}
-                    </span>
+                    <div style="display: flex; gap: 10px;">
+                        <!-- Botões de Ação Dinâmicos com Modais -->
+                        <button onclick="prepararModalEditar('{{ carro.id }}', '{{ carro.marca|escapejs }}', '{{ carro.modelo|escapejs }}', '{{ carro.ano }}', '{{ carro.placa|escapejs }}')" class="btn btn-outline" style="padding: 6px 12px; font-size: 13px;">Editar</button>
+                        <button onclick="prepararModalExcluir('{{ carro.id }}', '{{ carro.marca|escapejs }} {{ carro.modelo|escapejs }}')" class="btn btn-outline-red" style="padding: 6px 12px; font-size: 13px;">Excluir</button>
+                    </div>
                 </div>
-            </li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p style="color: #e74c3c;">Você ainda não solicitou nenhuma manutenção.</p>
+            {% empty %}
+                <p style="text-align: center; color: #e74c3c; padding: 20px; background-color: #222630; border-radius: 8px;">Nenhum carro cadastrado no sistema ainda.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Seção: Histórico de Solicitações -->
+        <div class="section-header">
+            <h2>Meu Histórico de Solicitações</h2>
+        </div>
+
+        {% if manutencoes_para_tela %}
+            {% for manutencao in manutencoes_para_tela %}
+                <div class="card card-history">
+                    <div class="history-grid">
+                        <div class="history-info">
+                            <p><strong>Veículo:</strong> {{ manutencao.veiculo }}</p>
+                            <p><strong>Tipo:</strong> {{ manutencao.get_tipo_display }}</p>
+                            <p><strong>Data da Solicitação:</strong> {{ manutencao.criado_em|date:"d/m/Y" }} às {{ manutencao.criado_em|date:"H:i" }}</p>
+                        </div>
+                        <div class="history-info" style="text-align: right;">
+                            <span class="badge-status">{{ manutencao.get_status_display }}</span>
+                            <p style="margin-top: 15px;"><strong>Mecânico Responsável:</strong> {{ manutencao.mecanico.first_name|default:"Aguardando" }}</p>
+                            {% if manutencao.data_aceite %}
+                                <p><strong>Aceite em:</strong> {{ manutencao.data_aceite|date:"d/m/Y H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div style="background-color: #1a1d24; padding: 10px 15px; border-radius: 6px; margin-bottom: 10px;">
+                        <p style="margin: 0; font-size: 14px;"><strong>Problema Relatado:</strong> {{ manutencao.descricao_problema }}</p>
+                    </div>
+
+                    <!-- VISTORIA (AGUARDANDO APROVAÇÃO) -->
+                    {% if manutencao.status == 'AGUARDANDO_APROVACAO' %}
+                        <div class="diag-box aprovacao">
+                            <strong style="color: #f39c12;">Diagnóstico do Mecânico:</strong>
+                            <p style="font-size: 14px; color: #a9b1bd;">{{ manutencao.diagnostico_vistoria|linebreaksbr }}</p>
+                            
+                            {% if manutencao.imagens_evidencia %}
+                                <a href="{{ manutencao.imagens_evidencia }}" target="_blank" class="btn btn-outline" style="font-size: 12px; margin-top: 10px;">📸 Ver Imagem de Evidência</a>
+                            {% endif %}
+                            
+                            <hr style="border: 1px solid #2d3340; margin: 15px 0;">
+                            
+                            <strong style="color: #f39c12;">Orçamento: Selecione os itens que autoriza realizar</strong>
+                            <form action="{% url 'aprovar_vistoria' manutencao.id %}" method="POST" id="form-aprovacao-{{ manutencao.id }}">
+                                {% csrf_token %}
+                                <ul class="item-list">
+                                    {% for item in manutencao.itens_servico.all %}
+                                        <li>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                {% if item.obrigatorio %}
+                                                    <input type="hidden" name="itens_aprovados" value="{{ item.id }}">
+                                                    <input type="checkbox" checked disabled class="chk-calc-{{ manutencao.id }}" data-preco="{{ item.preco|stringformat:'f' }}">
+                                                    <span style="color: #e74c3c; font-weight: bold; text-decoration: underline;">{{ item.descricao }} (Obrigatório)</span>
+                                                {% else %}
+                                                    <input type="checkbox" name="itens_aprovados" value="{{ item.id }}" checked class="chk-calc-{{ manutencao.id }}" data-preco="{{ item.preco|stringformat:'f' }}" onchange="calcularTotalCliente('{{ manutencao.id }}')">
+                                                    <span style="color: white;">{{ item.descricao }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <span style="color: white;">R$ {{ item.preco }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; background-color: #111318; padding: 15px; border-radius: 6px;">
+                                    <strong style="color: #f39c12; font-size: 16px;">Valor Total Aprovado:</strong>
+                                    <strong id="total-display-{{ manutencao.id }}" style="color: #f39c12; font-size: 18px;">R$ {{ manutencao.valor }}</strong>
+                                </div>
+
+                                <div style="display: flex; gap: 10px;">
+                                    <button type="submit" class="btn btn-green" style="flex: 1;">✓ Aprovar Selecionados</button>
+                                </div>
+                            </form>
+                            
+                            <form action="{% url 'recusar_vistoria' manutencao.id %}" method="POST" style="margin-top: 10px;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-red" style="width: 100%;">X Rejeitar Todo o Orçamento</button>
+                            </form>
+                        </div>
+                    {% endif %}
+
+                    <!-- SERVIÇO CONCLUÍDO (NOTA FISCAL) -->
+                    {% if manutencao.status == 'CONCLUIDO' %}
+                        <div class="diag-box concluido">
+                            <strong style="color: #2ecc71;">Diagnóstico Técnico:</strong>
+                            <p style="font-size: 14px; color: #a9b1bd;">{{ manutencao.diagnostico|linebreaksbr }}</p>
+                            
+                            <hr style="border: 1px solid #2d3340; margin: 15px 0;">
+                            
+                            <strong style="color: white;">SERVIÇOS E PEÇAS REALIZADOS</strong>
+                            <ul class="item-list">
+                                {% for item in manutencao.itens_servico.all %}
+                                    {% if item.aprovado %}
+                                    <li>
+                                        <span style="color: white;">{{ item.descricao }}</span>
+                                        <span style="color: white;">R$ {{ item.preco }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; background-color: #111318; padding: 15px; border-radius: 6px;">
+                                <strong style="color: #2ecc71; font-size: 16px;">Valor Total Final:</strong> 
+                                <strong style="font-size: 18px; color: #2ecc71;">R$ {{ manutencao.valor }}</strong>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 50px 0; background-color: #222630; border-radius: 12px;">
+                <p>Você ainda não solicitou nenhuma manutenção.</p>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAIS DE AÇÃO DO CLIENTE                  -->
+    <!-- ========================================== -->
+
+    <!-- Modal Cadastrar Novo Veículo -->
+    <div id="modalCadastrar" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalCadastrar')">&times;</span>
+            <h3 style="color: white; margin-top: 0;">Cadastrar Veículo</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Adicione um novo carro à sua garagem virtual.</p>
+            
+            <form action="{% url 'add_vehicle' %}" method="POST">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Placa *</label>
+                        <input type="text" name="placa" class="form-control" placeholder="ABC1234" required style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Ano</label>
+                        <input type="number" name="ano" class="form-control" placeholder="Ex: 2020">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Marca *</label>
+                    <input type="text" name="marca" class="form-control" placeholder="Ex: Honda" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo *</label>
+                    <input type="text" name="modelo" class="form-control" placeholder="Ex: Civic" required>
+                </div>
+                <button type="submit" class="btn btn-green" style="width: 100%; margin-top: 10px;">Salvar Veículo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Registrar Problema -->
+    <div id="modalProblema" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalProblema')">&times;</span>
+            <h3 style="color: white; margin-top: 0;">Registrar Problema</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Descreva o que está acontecendo com o seu carro.</p>
+            
+            <form action="{% url 'request_maintenance' %}" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Qual veículo está com problema? *</label>
+                    <select name="veiculo" class="form-control" required>
+                        <option value="" disabled selected>Selecione um veículo da sua garagem...</option>
+                        {% for carro in carros_para_tela %}
+                            <option value="{{ carro.id }}">{{ carro.marca }} {{ carro.modelo }} ({{ carro.placa }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo de Solicitação *</label>
+                    <select name="tipo" class="form-control" required>
+                        <!-- Adicione as opções baseadas no que tem no seu modelo. Exemplo: -->
+                        <option value="REVISAO">Revisão</option>
+                        <option value="CORRETIVA">Manutenção Corretiva</option>
+                        <option value="PREVENTIVA">Manutenção Preventiva</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Descreva o problema *</label>
+                    <textarea name="descricao_problema" class="form-control" rows="4" placeholder="Ex: Barulho na roda dianteira ao frear..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-orange" style="width: 100%; margin-top: 10px;">Solicitar Orçamento</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Veículo (Ação Dinâmica) -->
+    <div id="modalEditar" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalEditar')">&times;</span>
+            <h3 style="color: white; margin-top: 0;">Editar Veículo</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Atualize as informações do seu carro.</p>
+            
+            <form id="formEditar" method="POST">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Placa *</label>
+                        <input type="text" id="edit_placa" name="placa" class="form-control" required style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Ano</label>
+                        <input type="number" id="edit_ano" name="ano" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Marca *</label>
+                    <input type="text" id="edit_marca" name="marca" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo *</label>
+                    <input type="text" id="edit_modelo" name="modelo" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 10px;">Atualizar Dados</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Excluir Veículo (Ação Dinâmica) -->
+    <div id="modalExcluir" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <span class="close-btn" onclick="fecharModal('modalExcluir')">&times;</span>
+            <h3 style="color: #e74c3c; margin-top: 0; font-size: 24px;">Excluir Veículo?</h3>
+            <p style="color: white; font-size: 16px; margin: 20px 0;">Tem certeza que deseja excluir o <strong id="excluirNome" style="color: #f39c12;"></strong>?</p>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 25px;">Esta ação não pode ser desfeita.</p>
+            
+            <form id="formExcluir" method="POST">
+                {% csrf_token %}
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button type="button" class="btn btn-outline" onclick="fecharModal('modalExcluir')" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-red" style="flex: 1;">Sim, Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Meu Perfil (Universal) -->
+    <div id="modalPerfil" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalPerfil')">&times;</span>
+            <h3 style="color: white; margin-top: 0; font-size: 20px;">Meu Perfil</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Atualize seus dados pessoais e credenciais de acesso.</p>
+            
+            <form method="POST" action="{% url 'atualizar_perfil' %}">
+                {% csrf_token %}
+                
+                <h4 class="form-section-title">Dados Pessoais</h4>
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Nome</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Sobrenome</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group form-col-2">
+                        <label>E-mail (Login)</label>
+                        <input type="email" name="email" class="form-control" value="{{ request.user.email }}" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Telefone</label>
+                        <input type="text" name="telefone" class="form-control" value="{{ request.user.telefone|default:'' }}">
+                    </div>
+                </div>
+
+                <h4 class="form-section-title">Segurança</h4>
+                <div class="form-group">
+                    <label>Nova Senha</label>
+                    <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para não alterar a senha atual">
+                </div>
+
+                <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 15px;">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BARRA LATERAL DE NOTIFICAÇÕES -->
+    <div id="sidebarNotificacoes" class="notification-sidebar">
+        <div class="sidebar-header">
+            <h3>🔔 Notificações</h3>
+            <button class="close-sidebar" onclick="toggleSidebar()">X</button>
+        </div>
+        
+        <div class="notification-list">
+            {% for notificacao in notificacoes %}
+                <div class="notification-item {% if not notificacao.lida %}nao-lida{% endif %}">
+                    <p>{{ notificacao.mensagem }}</p>
+                    <small>{{ notificacao.criado_em|date:"d/m/Y H:i" }}</small>
+                </div>
+            {% empty %}
+                <div style="text-align: center; color: #a9b1bd; margin-top: 50px;">
+                    <span style="font-size: 40px; display: block; margin-bottom: 10px;">🔕</span>
+                    <p>Nenhuma notificação</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- POP-UP DE NOVAS SOLICITAÇÕES (Aparece no Login) -->
+    {% if mostrar_popup %}
+        <div id="modalNovasSolicitacoes" class="modal" style="display: flex;">
+            <div class="modal-content" style="padding: 0; overflow: hidden;">
+                <div style="background-color: #1a1d24; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340;">
+                    <h3 style="margin: 0; color: white; display: flex; align-items: center; gap: 10px;">
+                        <span style="background-color: rgba(255, 123, 0, 0.1); padding: 8px; border-radius: 50%; color: #f39c12; font-size: 14px;">🔔</span>
+                        Atualizações
+                    </h3>
+                    <span class="close-btn" style="position: static;" onclick="fecharPopupELer()">&times;</span>
+                </div>
+                
+                <div style="padding: 20px; max-height: 400px; overflow-y: auto;">
+                    <p style="color: #a9b1bd; margin-top: 0;">Você tem {{ notificacoes_nao_lidas }} novo(s) aviso(s).</p>
+                    
+                    {% for notificacao in notificacoes %}
+                        {% if not notificacao.lida %}
+                            <div style="background-color: #1a1d24; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #2d3340; border-left: 4px solid #3498db;">
+                                <p style="margin: 0; color: white; font-size: 14px;">{{ notificacao.mensagem }}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 11px; color: #a9b1bd;">{{ notificacao.criado_em|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <button onclick="fecharPopupELer()" class="btn btn-green" style="width: 100%; margin-top: 10px;">Continuar para o Painel</button>
+                </div>
+            </div>
+        </div>
     {% endif %}
+
     <script>
+        // Funções para Controle dos Modais Genéricos
+        function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Preparar Modal de Edição (Injeta os dados no formulário)
+        function prepararModalEditar(id, marca, modelo, ano, placa) {
+            document.getElementById('edit_marca').value = marca;
+            document.getElementById('edit_modelo').value = modelo;
+            document.getElementById('edit_ano').value = ano;
+            document.getElementById('edit_placa').value = placa;
+            
+            // Atualiza a URL do form (gambiarra segura para o Django Template)
+            let baseUrl = "{% url 'edit_vehicle' 999999 %}".replace('999999', id);
+            document.getElementById('formEditar').action = baseUrl;
+            abrirModal('modalEditar');
+        }
+
+        // Preparar Modal de Exclusão (Injeta o nome e o ID)
+        function prepararModalExcluir(id, nome) {
+            document.getElementById('excluirNome').innerText = nome;
+            let baseUrl = "{% url 'delete_vehicle' 999999 %}".replace('999999', id);
+            document.getElementById('formExcluir').action = baseUrl;
+            abrirModal('modalExcluir');
+        }
+
+        // Cálculo do valor do orçamento no Front-End
         function calcularTotalCliente(manutencaoId) {
             let total = 0;
-            // Busca todos os checkboxes daquela manutenção específica
             const checkboxes = document.querySelectorAll('.chk-calc-' + manutencaoId);
             
             checkboxes.forEach(function(chk) {
-                // Se a caixinha estiver marcada, soma o valor
                 if (chk.checked) {
-                    let valor = parseFloat(chk.getAttribute('data-preco'));
+                    let valor = parseFloat(chk.getAttribute('data-preco').replace(',', '.'));
                     if (!isNaN(valor)) {
                         total += valor;
                     }
                 }
             });
             
-            // Atualiza o texto na tela
             document.getElementById('total-display-' + manutencaoId).innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // Lógica de Notificações
+        function limparBolinhaNotificacao() {
+            fetch("{% url 'marcar_notificacoes_lidas' %}", { method: 'POST' })
+            .then(response => {
+                if(response.ok) {
+                    const badge = document.querySelector('.badge-notificacao');
+                    if(badge) badge.style.display = 'none';
+                    document.querySelectorAll('.notification-item.nao-lida').forEach(item => {
+                        item.classList.remove('nao-lida');
+                    });
+                }
+            });
+        }
+
+        function toggleSidebar() { 
+            const sidebar = document.getElementById('sidebarNotificacoes');
+            sidebar.classList.toggle('open');
+            if(sidebar.classList.contains('open')) {
+                limparBolinhaNotificacao();
+            }
+        }
+
+        function fecharPopupELer() {
+            document.getElementById('modalNovasSolicitacoes').style.display = 'none';
+            limparBolinhaNotificacao();
+        }
+
+        /* CONTROLE DO TEMA (CLARO/ESCURO) */
+        // Verifica a memória do navegador ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('autotrack_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if(themeBtn) themeBtn.innerText = '☀️';
+            }
+        });
+
+        // Alterna o tema e guarda a preferência
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            body.classList.toggle('light-theme');
+            
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('autotrack_theme', 'light');
+                themeBtn.innerText = '☀️';
+            } else {
+                localStorage.setItem('autotrack_theme', 'dark');
+                themeBtn.innerText = '🌙';
+            }
         }
     </script>
 </body>

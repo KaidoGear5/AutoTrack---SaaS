@@ -2,60 +2,131 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoTrack - Realizar Vistoria</title>
+    <title>Painel do Mecânico - Realizar Vistoria</title>
+    <style>
+        /* Base do Dark Mode */
+        body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        
+        /* Navbar Superior */
+        .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; background-color: #ff7b00; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .user-text strong { color: white; display: block; font-size: 16px; }
+        .user-text span { font-size: 12px; }
+        .nav-actions { display: flex; align-items: center; gap: 20px; }
+        .nav-actions a { color: #a9b1bd; text-decoration: none; font-size: 14px; font-weight: bold; transition: 0.3s; }
+        .nav-actions a:hover { color: white; }
+
+        /* Container e Cartões */
+        .container { padding: 40px; max-width: 800px; margin: 0 auto; }
+        .card-padrao { background-color: #222630; padding: 40px; border-radius: 12px; border: 1px solid #2d3340; }
+        .card-interno { background-color: #1a1d24; padding: 20px; border-radius: 8px; border: 1px solid #2d3340; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        
+        /* Botões */
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; font-family: inherit; text-align: center; }
+        .btn-orange { background-color: #ff7b00; color: white; }
+        .btn-orange:hover { background-color: #e66e00; }
+        .btn-green { background-color: #10b981; color: white; }
+        .btn-green:hover { background-color: #059669; }
+        .btn-red { background-color: #e74c3c; color: white; padding: 12px 16px; border-radius: 6px; }
+        .btn-red:hover { background-color: #c0392b; }
+
+        /* Formulários (Forçando estilo nos inputs gerados pelo Django) */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; font-weight: bold; color: #ff7b00; margin-bottom: 8px; }
+        textarea, input[type="text"], input[type="number"], input[type="url"] { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit; font-size: 14px; }
+        textarea:focus, input:focus { outline: none; border-color: #ff7b00; }
+        
+        hr { border: 0; border-top: 1px solid #2d3340; margin: 30px 0; }
+
+        /* ========================================= */
+        /* TEMA CLARO (Overrides)                    */
+        /* ========================================= */
+        body.light-theme { background-color: #f4f6f8; color: #4b5563; }
+        body.light-theme .navbar, body.light-theme .card-padrao { background-color: #ffffff; border-color: #e5e7eb; }
+        body.light-theme .card-interno { background-color: #f9fafb; border-color: #e5e7eb; }
+        
+        body.light-theme h2, body.light-theme strong, body.light-theme .user-text strong { color: #1f2937; }
+        body.light-theme textarea, body.light-theme input[type="text"], body.light-theme input[type="number"], body.light-theme input[type="url"] { color: #1f2937; background-color: #f9fafb; border-color: #d1d5db; }
+        body.light-theme textarea:focus, body.light-theme input:focus { border-color: #ff7b00; }
+        body.light-theme hr { border-top-color: #e5e7eb; }
+        
+        /* Input de Mão de Obra inativo no Dark/Light Mode */
+        input[readonly] { background-color: #2d3340 !important; color: #a9b1bd !important; cursor: not-allowed; }
+        body.light-theme input[readonly] { background-color: #e5e7eb !important; color: #6b7280 !important; }
+    </style>
 </head>
-<body style="background-color: #2c3e50; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px;">
+<body>
 
-    <div style="background-color: #34495e; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); width: 600px; color: white;">
-        <h2 style="color: #e67e22; text-align: center; margin-bottom: 5px;">Realizar Vistoria</h2>
-        <p style="text-align: center; color: #bdc3c7; margin-bottom: 20px;">Veículo: {{ manutencao.veiculo }}</p>
-
-        <form method="POST">
-            {% csrf_token %}
-            
-            <label style="font-weight: bold; color: #f39c12;">Diagnóstico da Vistoria *</label><br>
-            {{ form.diagnostico_vistoria }}
-            
-            <br><br>
-            <label style="font-weight: bold; color: #f39c12;">Imagens de Evidência (Link URL)</label><br>
-            {{ form.imagens_evidencia }}
-            
-            <hr style="border: 1px solid #2c3e50; margin: 25px 0;">
-
-            <!-- SEÇÃO DE ORÇAMENTO PRÉVIO -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <label style="font-weight: bold; color: #f39c12;">Orçamento: Serviços e Peças</label>
-                <button type="button" onclick="adicionarItem()" style="background-color: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    + Adicionar Peça
-                </button>
+    <!-- Navbar Superior com Botão de Voltar -->
+    <div class="navbar">
+        <div class="user-info">
+            <div class="avatar">{{ request.user.first_name|first|default:"M" }}</div>
+            <div class="user-text">
+                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                <span>Mecânico · AutoTrack</span>
             </div>
+        </div>
+        <div class="nav-actions">
+            <a href="{% url 'home' %}">⬅ Voltar ao Painel</a>
+            <button id="theme-toggle-btn" onclick="toggleTheme()" style="background: none; border: none; font-size: 18px; cursor: pointer;">🌙</button>
+        </div>
+    </div>
 
-            <div id="itens-container">
-                <!-- 1. MÃO DE OBRA (FIXA, INEXCLUÍVEL E OBRIGATÓRIA) -->
-                <div class="item-row" style="display: flex; gap: 10px; margin-bottom: 10px; background-color: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; border-left: 4px solid #e74c3c; align-items: center;">
-                    <input type="text" name="descricao[]" value="Mão de Obra" readonly style="flex: 3; padding: 8px; border-radius: 4px; border: none; background-color: #7f8c8d; color: white; font-weight: bold; outline: none; cursor: not-allowed;">
-                    <!-- Campo invisível que avisa o banco de dados que isso é Mão de Obra -->
-                    <input type="hidden" name="tipo_item[]" value="MAO_DE_OBRA">
-                    
-                    <input type="number" step="0.01" name="preco[]" placeholder="R$ Valor" required style="flex: 1; padding: 8px; border-radius: 4px; border: none;" oninput="calcularTotal()">
-                    
-                    <!-- Espaço vazio para alinhar perfeitamente com os botões 'X' debaixo -->
-                    <div style="width: 32px;"></div> 
+    <div class="container">
+        <div class="card-padrao">
+            <h2 style="color: #ff7b00; text-align: center; margin-top: 0; margin-bottom: 5px;">Realizar Vistoria</h2>
+            <p style="text-align: center; margin-bottom: 30px;">Veículo: <strong>{{ manutencao.veiculo.marca }} {{ manutencao.veiculo.modelo }} - {{ manutencao.veiculo.placa }}</strong></p>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>Diagnóstico da Vistoria *</label>
+                    {{ form.diagnostico_vistoria }}
                 </div>
-            </div>
+                
+                <div class="form-group">
+                    <label>Imagens de Evidência (Link URL)</label>
+                    {{ form.imagens_evidencia }}
+                </div>
+                
+                <hr>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; background-color: #2c3e50; padding: 15px; border-radius: 5px; margin-top: 20px; border: 1px solid #f39c12;">
-                <strong style="color: #f39c12; font-size: 16px;">$ Total Previsto</strong>
-                <strong id="valor-total-display" style="color: #f39c12; font-size: 18px;">R$ 0,00</strong>
-            </div>
-            
-            <button type="submit" style="width: 100%; padding: 12px; background-color: #e67e22; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 25px; font-weight: bold;">
-                Enviar Orçamento para o Cliente
-            </button>
-        </form>
+                <!-- SEÇÃO DE ORÇAMENTO PRÉVIO -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <label style="margin-bottom: 0;">Orçamento: Serviços e Peças</label>
+                    <button type="button" class="btn btn-green" onclick="adicionarItem()" style="padding: 8px 15px; font-size: 13px;">
+                        + Adicionar Peça
+                    </button>
+                </div>
+
+                <div id="itens-container">
+                    <!-- 1. MÃO DE OBRA (FIXA E OBRIGATÓRIA) -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                        <input type="text" name="descricao[]" value="Mão de Obra" readonly style="flex: 3; font-weight: bold;">
+                        <input type="hidden" name="tipo_item[]" value="MAO_DE_OBRA">
+                        <input type="number" step="0.01" name="preco[]" placeholder="R$ Valor" required style="flex: 1;" oninput="calcularTotal()">
+                        
+                        <!-- Espaço vazio para alinhar com os botões 'X' -->
+                        <div style="width: 44px;"></div> 
+                    </div>
+                </div>
+
+                <div class="card-interno">
+                    <strong style="color: #ff7b00; font-size: 16px;">$ Total Previsto</strong>
+                    <strong id="valor-total-display" style="color: #10b981; font-size: 20px;">R$ 0,00</strong>
+                </div>
+                
+                <button type="submit" class="btn btn-orange" style="width: 100%; margin-top: 25px; font-size: 16px;">
+                    Enviar Orçamento para o Cliente
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
+        // Função para calcular o total
         function calcularTotal() {
             let total = 0;
             const precos = document.querySelectorAll('input[name="preco[]"]');
@@ -66,20 +137,46 @@
             document.getElementById('valor-total-display').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
+        // Função para adicionar nova peça dinamicamente
         function adicionarItem() {
             const container = document.getElementById('itens-container');
             const row = document.createElement('div');
             row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
             row.innerHTML = `
-                <input type="text" name="descricao[]" placeholder="Ex: Pastilha de Freio..." required style="flex: 3; padding: 8px; border-radius: 4px; border: none;">
-                <!-- O sistema já entende que as linhas criadas no botão são peças -->
+                <input type="text" name="descricao[]" placeholder="Ex: Pastilha de Freio..." required style="flex: 3;">
                 <input type="hidden" name="tipo_item[]" value="PECA">
-                
-                <input type="number" step="0.01" name="preco[]" placeholder="R$ 0,00" required style="flex: 1; padding: 8px; border-radius: 4px; border: none;" oninput="calcularTotal()">
-                
-                <button type="button" onclick="this.parentElement.remove(); calcularTotal();" style="background-color: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">X</button>
+                <input type="number" step="0.01" name="preco[]" placeholder="R$ 0,00" required style="flex: 1;" oninput="calcularTotal()">
+                <button type="button" class="btn-red" onclick="this.parentElement.remove(); calcularTotal();" style="border: none; cursor: pointer; font-weight: bold;">X</button>
             `;
             container.appendChild(row);
+        }
+
+        /* ========================================= */
+        /* CONTROLE DO TEMA (CLARO/ESCURO)           */
+        /* ========================================= */
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('autotrack_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if(themeBtn) themeBtn.innerText = '☀️';
+            }
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            body.classList.toggle('light-theme');
+            
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('autotrack_theme', 'light');
+                themeBtn.innerText = '☀️';
+            } else {
+                localStorage.setItem('autotrack_theme', 'dark');
+                themeBtn.innerText = '🌙';
+            }
         }
     </script>
 </body>

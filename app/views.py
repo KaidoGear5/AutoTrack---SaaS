@@ -7,11 +7,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 # login_required: É um "cadeado". Se o usuário não estiver logado, não deixa acessar a função e manda pra tela de login.
 from django.contrib.auth.decorators import login_required
 # São importadas as classes que criamos no models.py (Vehicle, Maintenance e ServiceItem) para manipular os dados do banco de dados.
-from .models import User, Vehicle, Maintenance, ServiceItem, Workshop
+from .models import User, Vehicle, Maintenance, ServiceItem, Workshop, Notification
 # São importados os formulários que criados no forms.py para manipular os dados do usuário.
 from .forms import VehicleForm, CustomUserCreationForm, MaintenanceForm, FinishMaintenanceForm, VistoriaForm
 from django.contrib.auth import login # Ferramenta para forçar o login automático após o cadastro
 from django.utils import timezone # Ferramenta para pegar a data e hora exata de "agora"
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import update_session_auth_hash # Ferramenta para atualizar a sessão do usuário após alterar a senha, evitando que ele seja desconectado
 
 # 1. PAINEL PRINCIPAL (Página home)
 @login_required(login_url='login')
@@ -42,11 +45,20 @@ def home(request):
         # Busca as O.S que ESTE mecânico assumiu
         meus_servicos = Maintenance.objects.filter(mecanico=request.user, status__in=['ACEITA', 'ANDAMENTO']).order_by('-criado_em')
 
+        # Notificações - Ordenando das mais recentes para as mais antigas
+        todas_notificacoes = Notification.objects.filter(usuario=request.user).order_by('-criado_em')
+        notificacoes_nao_lidas = todas_notificacoes.filter(lida=False).count()
+        minhas_notificacoes = todas_notificacoes[:15] # Limita a apenas as 15 mais recentes para enviar pro HTML
+        mostrar_popup = (notificacoes_nao_lidas > 0) # Só mostra o popup se houver mensagens não lidas E se for a primeira vez que a página carrega sem nenhuma aba específica selecionada (sinal de que acabou de fazer login)
+
         # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
             'solicitacoes': fila_de_espera, # Lista de solicitações de manutenção aguardando atendimento, para mostrar no painel
             'meus_servicos': meus_servicos, # Lista de serviços do mecânico logado, para mostrar no painel
-            'erro': erro # Mensagem de erro, se houver
+            'erro': erro, # Mensagem de erro, se houver
+            'notificacoes': minhas_notificacoes, # Envia a lista de notificações para a aba de notificações
+            'notificacoes_nao_lidas': notificacoes_nao_lidas, # Envia a contagem de notificações não lidas para o HTML, para mostrar no ícone de sino
+            'mostrar_popup': mostrar_popup # Indica se o popup de notificações deve ser mostrado ou não
         }
         return render(request, 'mechanic_dashboard.html', contexto)
 
@@ -81,6 +93,30 @@ def home(request):
         total_andamento = manutencoes_do_dono.filter(status__in=['ACEITA', 'AGUARDANDO_APROVACAO', 'ANDAMENTO']).count()
         # 4. Conta os Concluídos (status CONCLUIDO)
         total_concluidos = manutencoes_do_dono.filter(status='CONCLUIDO').count()
+        placa_buscada = request.GET.get('placa_busca', '').strip().upper() # Pega a placa digitada na barra de busca, remove espaços e deixa maiúscula
+        veiculo_encontrado = None
+        busca_realizada = False
+
+        if placa_buscada:
+            busca_realizada = True
+            # Busca o veículo com a placa exata, mas apenas se ele tiver manutenções em alguma das oficinas do dono
+            veiculo_encontrado = Vehicle.objects.filter(placa=placa_buscada, manutencoes__oficina__in=minhas_oficinas).distinct().first()
+
+        # ABA VEÍCULOS: Lista todos os veículos que tiveram manutenções em alguma das oficinas do dono
+        meus_veiculos = Vehicle.objects.filter(manutencoes__oficina__in=minhas_oficinas).distinct()
+
+        # Notificações - Ordenando das mais recentes para as mais antigas
+        # 1. Primeiro pegamos TODAS as notificações
+        todas_notificacoes = Notification.objects.filter(usuario=request.user).order_by('-criado_em')
+        
+        # 2. Contamos quantas não foram lidas
+        notificacoes_nao_lidas = todas_notificacoes.filter(lida=False).count()
+        
+        # 3. Por fim, limitamos a apenas as 15 mais recentes para enviar pro HTML
+        minhas_notificacoes = todas_notificacoes[:15]
+
+        # Só mostra o popup se houver mensagens não lidas E se for a primeira vez que a página carrega sem nenhuma aba específica selecionada (sinal de que acabou de fazer login)
+        mostrar_popup = (notificacoes_nao_lidas > 0) and ('tab' not in request.GET)
 
         # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
@@ -89,7 +125,14 @@ def home(request):
             'total_pendentes': total_pendentes, # Envia os Pendentes pro HTML
             'total_andamento': total_andamento, # Envia os Em Andamento pro HTML
             'total_concluidos': total_concluidos, # Envia os Concluídos pro HTML
-            'solicitacoes': manutencoes_do_dono # Envia todas as solicitações de manutenção do dono para o HTML, para mostrar na aba de solicitações
+            'solicitacoes': manutencoes_do_dono, # Envia todas as solicitações de manutenção do dono para o HTML, para mostrar na aba de solicitações
+            'placa_buscada': placa_buscada, # Envia a placa digitada para o HTML, para mostrar na barra de busca
+            'veiculo_encontrado': veiculo_encontrado, # Envia o veículo encontrado para a aba de busca de placa
+            'busca_realizada': busca_realizada, # Indica se o dono realizou uma busca de placa ou não
+            'veiculos': meus_veiculos, # Envia a lista de veículos para a aba de veículos
+            'notificacoes': minhas_notificacoes, # Envia a lista de notificações para a aba de notificações
+            'notificacoes_nao_lidas': notificacoes_nao_lidas, # Envia a contagem de notificações não lidas para o HTML, para mostrar no ícone de sino
+            'mostrar_popup': mostrar_popup # Indica se o popup de notificações deve ser mostrado ou não
         }
         return render(request, 'owner_dashboard.html', contexto)
         
@@ -100,12 +143,50 @@ def home(request):
         
         # Busca o histórico de manutenções apenas dos VEÍCULOS desse cliente específico
         minhas_manutencoes = Maintenance.objects.filter(veiculo__proprietario=request.user).order_by('-criado_em')
+
+        # Notificações - Ordenando das mais recentes para as mais antigas
+        todas_notificacoes = Notification.objects.filter(usuario=request.user).order_by('-criado_em')
+        notificacoes_nao_lidas = todas_notificacoes.filter(lida=False).count()
+        minhas_notificacoes = todas_notificacoes[:15] # Limita a apenas as 15 mais recentes para enviar pro HTML
+        mostrar_popup = (notificacoes_nao_lidas > 0) # Só mostra o popup se houver mensagens não lidas E se for a primeira vez que a página carrega sem nenhuma aba específica selecionada (sinal de que acabou de fazer login)
         
         contexto = {
             'carros_para_tela': meus_carros,
-            'manutencoes_para_tela': minhas_manutencoes # Envia a lista para o HTML
+            'manutencoes_para_tela': minhas_manutencoes, # Envia a lista para o HTML, para mostrar na aba de histórico de manutenções
+            'notificacoes': minhas_notificacoes,
+            'notificacoes_nao_lidas': notificacoes_nao_lidas,
+            'mostrar_popup': mostrar_popup
         }
         return render(request, 'home.html', contexto)
+
+# ==============================================================================
+# ATUALIZAR PERFIL DO USUÁRIO
+# ==============================================================================
+@login_required
+def atualizar_perfil(request):
+    if request.method == 'POST':
+        user = request.user
+        
+        # Atualiza os dados básicos
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        
+        # Campo Telefone no User model
+        if hasattr(user, 'telefone'):
+            user.telefone = request.POST.get('telefone', user.telefone)
+            
+        # Verifica se o usuário digitou uma nova senha. Se sim, atualiza a senha e mantém o usuário logado.
+        nova_senha = request.POST.get('nova_senha')
+        if nova_senha:
+            user.set_password(nova_senha)
+            # Mantém o usuário logado após mudar a senha
+            update_session_auth_hash(request, user)
+            
+        user.save()
+        
+    # Redireciona de volta para a página de onde a pessoa veio
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 # ==============================================================================
 # CRUD DE VEÍCULOS (Criar, Editar, Excluir)
@@ -273,27 +354,64 @@ def atendimento_balcao(request):
         
     return redirect('home')
 
-# MECÂNICO ACEITAR O SERVIÇO
+# ABRIR O.S PARA VEÍCULO JÁ EXISTENTE (Aba Buscar Placa)
 @login_required(login_url='login')
+def nova_os_existente(request, veiculo_id):
+    if request.method == 'POST':
+        # Confirma que o carro existe
+        veiculo = get_object_or_404(Vehicle, id=veiculo_id)
+        
+        # Pega a oficina da Dona
+        oficina_atual = None
+        if request.user.role == 'DONO':
+            oficina_atual = request.user.oficinas_gerenciadas.first()
+            
+        if oficina_atual:
+            descricao_problema = request.POST.get('descricao_problema')
+            
+            # Abre a OS direto, pulando a criação de cliente e veículo
+            Maintenance.objects.create(
+                veiculo=veiculo,
+                oficina=oficina_atual,
+                descricao_problema=descricao_problema,
+                tipo='CORRETIVA', # Corretiva por padrão na recepção
+                status='PENDENTE'
+            )
+            
+        # Redireciona de volta com a aba de Solicitações aberta para ela ver o pedido lá
+        return redirect('/?tab=solicitacoes')
+    return redirect('home')
+
+# MECÂNICO ACEITAR O SERVIÇO
+@login_required
 def accept_maintenance(request, id):
-    # Trava dupla de segurança: Tem que ser mecânico E tem que ser via POST (clique no botão)
-    if request.user.role == 'MECANICO' and request.method == 'POST':
-        # Busca a ordem exata, mas APENAS se ela ainda estiver aguardando atendimento (status PENDENTE). Se não achar, dá erro 404.
-        manutencao = get_object_or_404(Maintenance, id=id, status='PENDENTE')
+    if request.method == 'POST':
+        manutencao = get_object_or_404(Maintenance, id=id)
         
-        # 1. Atribui o mecânico logado como o responsável
+        # 1. Atualiza os dados da manutenção
         manutencao.mecanico = request.user
+        manutencao.status = 'ACEITA'
         
-        # 2. Atualiza o status
-        manutencao.status = 'ACEITA' # Agora o cliente sabe que alguém vai cuidar do carro
-        
-        # 3. Registra a data e hora do aceite
-        manutencao.data_aceite = timezone.now()
-        
-        # 4. Salva no banco de dados
+        # 2. Garante que a manutenção pertence à oficina do mecânico
+        if not manutencao.oficina and hasattr(request.user, 'oficina_vinculada') and request.user.oficina_vinculada:
+            manutencao.oficina = request.user.oficina_vinculada
+            
         manutencao.save()
         
-    # Recarrega a página inicial (que vai remontar o painel atualizado)
+        # 3. Notifica o Cliente
+        Notification.objects.create(
+            usuario=manutencao.veiculo.proprietario,
+            mensagem=f"O mecânico {request.user.first_name} iniciou o atendimento do seu {manutencao.veiculo.modelo}."
+        )
+
+        # 4. Notifica o Dono (Apenas se a oficina e o dono existirem
+        if manutencao.oficina and hasattr(manutencao.oficina, 'dono') and manutencao.oficina.dono:
+            Notification.objects.create(
+                usuario=manutencao.oficina.dono,
+                mensagem=f"O mecânico {request.user.first_name} aceitou o serviço do veículo {manutencao.veiculo.placa}."
+            )
+            
+    # Redireciona de volta para o painel do mecânico
     return redirect('home')
 
 # FUNÇÃO PARA O MECÂNICO ENVIAR A VISTORIA E O ORÇAMENTO
@@ -308,37 +426,41 @@ def realizar_vistoria(request, id):
             vistoria.save() # Salva o laudo principal
             
             # Tratamento das Peças e Serviços Dinâmicos
-            # O HTML envia listas completas de tudo que o mecânico adicionou
             descricoes = request.POST.getlist('descricao[]')
             precos = request.POST.getlist('preco[]')
-            tipos = request.POST.getlist('tipo_item[]') # Pega se é Peça ou Mão de Obra
+            tipos = request.POST.getlist('tipo_item[]') 
             
             valor_total = 0
-            vistoria.itens_servico.all().delete() # Limpa qualquer item que estivesse salvo antes, para evitar duplicatas se o mecânico reeditar
+            vistoria.itens_servico.all().delete() 
             
-            # O 'zip' une as três listas. Ele lê a 1ª descrição, com o 1º preço, com o 1º tipo simultaneamente
             for desc, preco, tipo in zip(descricoes, precos, tipos):
                 if desc and preco:
-                    preco_float = float(preco) # Converte o texto do HTML para número decimal
-                    is_obrig = (tipo == 'MAO_DE_OBRA') # Se ele selecionou Mão de Obra, fica obrigatório
+                    preco_float = float(preco) 
+                    is_obrig = (tipo == 'MAO_DE_OBRA') 
 
-                    # Cria o item no banco de dados e atrela a esta vistoria
                     ServiceItem.objects.create(
                         manutencao=vistoria,
                         descricao=desc,
                         preco=preco_float,
                         obrigatorio=is_obrig,
-                        aprovado=True # Começa tudo pré-aprovado para o cliente, que depois pode desmarcar o que não quiser
+                        aprovado=True 
                     )
-                    valor_total += preco_float # Acumula o valor total do orçamento para mostrar no final
+                    valor_total += preco_float 
             
-            vistoria.valor = valor_total # Atualiza o valor total da manutenção com a soma de todos os itens
-            vistoria.status = 'AGUARDANDO_APROVACAO' # Joga a bola pro cliente
+            vistoria.valor = valor_total 
+            vistoria.status = 'AGUARDANDO_APROVACAO' 
             vistoria.save()
+
+            # Notifica o Cliente sobre o Orçamento (Apenas após salvar o formulário!)
+            Notification.objects.create(
+                usuario=manutencao.veiculo.proprietario,
+                mensagem=f"Orçamento disponível! O mecânico {request.user.first_name} enviou a vistoria do seu {manutencao.veiculo.modelo} para aprovação."
+            )
             
             return redirect('home')
+            
     else:
-        form = VistoriaForm(instance=manutencao) # Preenche o formulário com os dados atuais da manutenção, caso o mecânico queira reeditar a vistoria antes do cliente aprovar
+        form = VistoriaForm(instance=manutencao) 
         
     contexto = {'form': form, 'manutencao': manutencao}
     return render(request, 'realizar_vistoria.html', contexto)
@@ -369,6 +491,11 @@ def aprovar_vistoria(request, id):
         manutencao.valor = valor_final # Atualiza o valor final da manutenção apenas com o que foi aprovado
         manutencao.status = 'ANDAMENTO' # Devolve a bola para o mecânico
         manutencao.save()
+
+        Notification.objects.create(
+            usuario=manutencao.mecanico,
+            mensagem=f"Serviço aprovado! O cliente autorizou o orçamento para o {manutencao.veiculo.modelo} ({manutencao.veiculo.placa})."
+        )
         
     return redirect('home')
 
@@ -380,6 +507,11 @@ def recusar_vistoria(request, id):
     if request.method == 'POST':
         manutencao.status = 'RECUSADA' # Cliente deu o sinal vermelho para tudo!
         manutencao.save()
+
+        Notification.objects.create( 
+            usuario=manutencao.mecanico,
+            mensagem=f"Serviço recusado! O cliente não autorizou o orçamento para o {manutencao.veiculo.modelo} ({manutencao.veiculo.placa})."
+        )
         
     return redirect('home')
 
@@ -402,7 +534,11 @@ def finish_maintenance(request, id):
             # Devolvemos o valor exato para o banco de dados para não ser apagado
             servico_concluido.valor = valor_correto 
             servico_concluido.save()
-            
+
+            Notification.objects.create(
+                usuario=manutencao.veiculo.proprietario,
+                mensagem=f"Serviço concluído! O mecânico finalizou o atendimento do seu {manutencao.veiculo.modelo} ({manutencao.veiculo.placa})."
+            )            
             return redirect('home')
     else:
         form = FinishMaintenanceForm(instance=manutencao)
@@ -413,3 +549,13 @@ def finish_maintenance(request, id):
         'itens_aprovados': manutencao.itens_servico.filter(aprovado=True) # Manda pro HTML só o que o cliente quis, para gerar a nota fiscal limpa
     }
     return render(request, 'finish_maintenance.html', contexto)
+
+# NOTIFICAÇÕES: MARCAR TODAS COMO LIDAS (Chamado via AJAX pelo JavaScript)
+@login_required
+@csrf_exempt # Permite que o JavaScript chame a função sem problemas
+def marcar_notificacoes_lidas(request):
+    if request.method == 'POST':
+        # Atualiza todas as notificações não lidas do usuário para lidas
+        Notification.objects.filter(usuario=request.user, lida=False).update(lida=True)
+        return JsonResponse({'status': 'sucesso'})
+    return JsonResponse({'status': 'erro'}, status=400)

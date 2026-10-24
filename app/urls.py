@@ -29,4 +29,10 @@ urlpatterns = [
     path('recusar-vistoria/<int:id>/', views.recusar_vistoria, name='recusar_vistoria'),
     # Rota do atendimento no balcão (oficina registra manutenção)
     path('novo-atendimento/', views.atendimento_balcao, name='atendimento_balcao'),
+    # Rota para criar uma nova ordem de serviço para um veículo já existente na base de dados da oficina
+    path('nova-os-existente/<int:veiculo_id>/', views.nova_os_existente, name='nova_os_existente'),
+    # Rota para marcar todas as notificações como lidas
+    path('marcar-notificacoes-lidas/', views.marcar_notificacoes_lidas, name='marcar_notificacoes_lidas'),
+    # Rota para alterar a senha do usuário
+    path('perfil/atualizar/', views.atualizar_perfil, name='atualizar_perfil'),
 ]

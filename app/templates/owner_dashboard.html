@@ -2,10 +2,93 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel do Dono - Gestão de Oficinas</title>
+    <title>Painel Administrativo - AutoTrack</title>
     <style>
         /* Base do Dark Mode inspirado no Figma */
         body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+
+        /* TEMA CLARO (Overrides) */
+        body.light-theme { background-color: #f4f6f8; color: #4b5563; }
+        
+        body.light-theme .navbar, body.light-theme .kpi-card, body.light-theme .tabs, 
+        body.light-theme .oficina-card, body.light-theme .codigo-box, 
+        body.light-theme .solicitacao-card, body.light-theme .modal-content, 
+        body.light-theme .notification-sidebar, body.light-theme .notification-item, 
+        body.light-theme .card, body.light-theme .convite-box, body.light-theme .diag-box,
+        body.light-theme .card-padrao, body.light-theme .card-interno {
+            background-color: #ffffff; border-color: #e5e7eb;
+        }
+        
+        body.light-theme h1, body.light-theme h2, body.light-theme h3, 
+        body.light-theme h4, body.light-theme strong, body.light-theme .user-text strong, 
+        body.light-theme .sidebar-header h3, body.light-theme .form-section-title,
+        body.light-theme .text-highlight {
+            color: #1f2937;
+        }
+        
+        body.light-theme .form-group label, body.light-theme .card-info p { color: #4b5563; }
+        body.light-theme .form-control { color: #1f2937; background-color: #f9fafb; border-color: #d1d5db; }
+        body.light-theme .form-control:focus { border-color: #ff7b00; }
+        
+        body.light-theme .close-btn, body.light-theme .nav-actions button { color: #6b7280; }
+        body.light-theme .close-btn:hover, body.light-theme .nav-actions button:hover { color: #1f2937; }
+        
+        body.light-theme .tab-btn { color: #6b7280; }
+        body.light-theme .tab-btn:hover { background-color: #f3f4f6; color: #1f2937; }
+        body.light-theme .tab-btn.active { background-color: #ff7b00; color: white; }
+        
+        body.light-theme .notification-item, body.light-theme .codigo-box { background-color: #f9fafb; }
+
+        /* Força a cor do texto nos Modais do Tema Claro (Ignora estilos inline) */
+        body.light-theme .modal-content h3,
+        body.light-theme .modal-content h4,
+        body.light-theme .modal-content strong {
+            color: #1f2937 !important;
+        }
+        
+        body.light-theme .modal-content p {
+            color: #6b7280 !important;
+        }
+
+        /* CORREÇÕES DE LEITURA E CONTRASTE */
+        /* Força a cor do texto para cinza escuro nas listas, parágrafos e spans */
+        body.light-theme .card p,
+        body.light-theme .card span:not(.badge-status),
+        body.light-theme .diag-box p,
+        body.light-theme .diag-box span:not(.badge-status),
+        body.light-theme .item-list span,
+        body.light-theme .history-info p {
+            color: #4b5563 !important;
+        }
+
+        /* Textos em negrito (strong) ficam bem escuros para leitura nítida */
+        body.light-theme .card strong,
+        body.light-theme .diag-box strong {
+            color: #1f2937 !important;
+        }
+
+        /* Protege as cores Verde (Sucesso), Laranja (Alerta) e Vermelho (Obrigatório) nos textos */
+        body.light-theme strong[style*="#2ecc71"],
+        body.light-theme span[style*="#2ecc71"] { color: #10b981 !important; }
+        body.light-theme strong[style*="#f39c12"],
+        body.light-theme span[style*="#f39c12"] { color: #d97706 !important; }
+        body.light-theme span[style*="#e74c3c"] { color: #dc2626 !important; }
+
+        /* Substitui os fundos pretos (inline) por caixas cinza-claras super legíveis */
+        body.light-theme div[style*="background-color: #1a1d24"],
+        body.light-theme div[style*="background-color: #111318"],
+        body.light-theme div[style*="background-color: rgba(0,0,0,0.2)"] {
+            background-color: #f3f4f6 !important;
+            border: 1px solid #e5e7eb !important;
+        }
+
+        /* Corrige a cor do texto das notificações no Tema Claro */
+        body.light-theme .notification-item p {
+            color: #1f2937 !important;
+        }
+        body.light-theme .notification-item small {
+        color: #6b7280 !important;
+        }
         
         /* Navbar Superior */
         .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
@@ -13,11 +96,19 @@
         .avatar { width: 40px; height: 40px; background-color: #ff7b00; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .user-text strong { color: white; display: block; font-size: 16px; }
         .user-text span { font-size: 12px; }
+        .nav-actions { display: flex; align-items: center; }
         .nav-actions a { color: #a9b1bd; text-decoration: none; margin-left: 20px; font-size: 14px; }
         .nav-actions a:hover { color: white; }
 
         /* Container Principal */
         .container { padding: 30px 40px; max-width: 1200px; margin: 0 auto; }
+
+        /* Botões Globais */
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; font-family: inherit; text-align: center;}
+        .btn-orange { background-color: #ff7b00; color: white; }
+        .btn-orange:hover { background-color: #e66e00; }
+        .btn-blue { background-color: #3498db; color: white; }
+        .btn-blue:hover { background-color: #2980b9; }
 
         /* Cards de KPI (Topo) */
         .kpi-row { display: flex; gap: 20px; margin-bottom: 30px; }
@@ -41,13 +132,15 @@
         .tab-btn:hover { background-color: #2d3340; color: white; }
         .tab-btn.active { background-color: #ff7b00; color: white; }
 
+        /* Cartões Genéricos e Textos */
+        .card-padrao { background-color: #222630; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3340; }
+        .card-interno { background-color: #1a1d24; padding: 15px; border-radius: 8px; border: 1px solid #2d3340; }
+        .text-highlight { color: white; }
+
         /* Listagem de Oficinas */
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .section-header h3 { color: white; margin: 0; }
-        .btn-orange { background-color: #ff7b00; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; }
-        .btn-orange:hover { background-color: #e66e00; }
-        .btn-full { width: 100%; margin-top: 10px; }
-
+        
         .oficina-card { background-color: #222630; padding: 25px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3340; }
         .oficina-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .oficina-top h4 { color: white; font-size: 20px; margin: 0 0 5px 0; }
@@ -58,26 +151,15 @@
         .codigo-box span { font-size: 12px; display: block; margin-bottom: 5px; }
         .codigo-box strong { color: #ff7b00; font-size: 18px; letter-spacing: 1px; }
 
-        /* Modais / Pop-ups */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background-color: #222630; padding: 30px; border-radius: 12px; width: 450px; border: 1px solid #2d3340; position: relative; }
-        .modal-content-large { width: 500px; max-height: 90vh; overflow-y: auto; }
-        .modal-content h3 { color: white; margin-top: 0; margin-bottom: 5px; }
-        .modal-content p { font-size: 13px; margin-bottom: 20px; }
-        
-        /* Formulários */
+        /* Formulários (Dentro dos Modais) */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: white; }
-        .form-control { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; }
+        .form-control { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit;}
         .form-control:focus { outline: none; border-color: #ff7b00; }
         .form-row { display: flex; gap: 10px; }
         .form-col { flex: 1; }
         .form-col-2 { flex: 2; }
         .form-section-title { color: #ff7b00; margin-bottom: 10px; margin-top: 15px; border-bottom: 1px solid #2d3340; padding-bottom: 5px; font-size: 16px; }
-        .text-uppercase { text-transform: uppercase; }
-        
-        .close-btn { position: absolute; right: 20px; top: 20px; color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; }
-        .close-btn:hover { color: white; }
 
         /* Aba de Solicitações */
         .solicitacao-card { background-color: #222630; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3340; display: flex; justify-content: space-between; align-items: center; }
@@ -89,6 +171,30 @@
         .status-ANDAMENTO, .status-ACEITA, .status-AGUARDANDO_APROVACAO { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid #3b82f6; }
         .status-CONCLUIDO { background-color: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; }
         .status-RECUSADA { background-color: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; }
+
+        /* SIDEBAR DE NOTIFICAÇÕES (Barra Lateral) */
+        .notification-sidebar { position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; background-color: #222630; border-left: 1px solid #2d3340; box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: right 0.3s ease; z-index: 2000; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .notification-sidebar.open { right: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; padding-bottom: 15px; margin-bottom: 15px; }
+        .sidebar-header h3 { margin: 0; color: white; display: flex; align-items: center; gap: 10px; }
+        .close-sidebar { background: none; border: 1px solid #ff7b00; border-radius: 4px; color: #ff7b00; font-size: 16px; cursor: pointer; padding: 2px 8px; }
+        .close-sidebar:hover { background-color: #ff7b00; color: white; }
+        .notification-list { flex: 1; overflow-y: auto; }
+        
+        .notification-item { background-color: #1a1d24; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #2d3340; position: relative; }
+        .notification-item.nao-lida { padding-left: 25px; border-left: 4px solid #ff7b00; }
+        .notification-item p { margin: 0 0 5px 0; font-size: 13px; color: white; }
+        .notification-item small { font-size: 11px; color: #a9b1bd; }
+
+        /* Indicador de Notificação no Botão */
+        .badge-notificacao { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; border: 2px solid #222630; }
+
+        /* Modais / Pop-ups */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 3000; }
+        .modal-content { background-color: #222630; border-radius: 12px; width: 500px; max-height: 90vh; overflow-y: auto; border: 1px solid #2d3340; position: relative; padding: 30px; text-align: left;}
+        .modal-content-nopadding { padding: 0; overflow: hidden; }
+        .close-btn { color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; position: absolute; right: 20px; top: 20px;}
+        .close-btn:hover { color: white; }
     </style>
 </head>
 <body>
@@ -99,13 +205,21 @@
             <div class="avatar">{{ request.user.first_name|first|default:"D" }}</div>
             <div class="user-text">
                 <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                <span>Dono · Gestão de Oficinas</span>
+                <span>Administrador · Trackmotor</span>
             </div>
         </div>
         <div class="nav-actions">
-            <a href="#">🌙</a>
-            <a href="#">👤 Perfil</a>
-            <a href="#">🔔</a>
+            <button id="theme-toggle-btn" onclick="toggleTheme()" style="background: none; border: none; font-size: 18px; cursor: pointer; margin-left: 20px;">🌙</button>
+            <button onclick="abrirModal('modalPerfil')" style="background: none; border: none; color: #a9b1bd; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-family: inherit;">👤 Perfil</button>
+            
+            <button onclick="toggleSidebar()" style="background: none; border: none; font-size: 18px; cursor: pointer; position: relative; margin-left: 20px;">
+                🔔
+                {% if notificacoes_nao_lidas > 0 %}
+                    <span class="badge-notificacao">{{ notificacoes_nao_lidas }}</span>
+                {% endif %}
+            </button>
+
+            <!-- Botão de Sair -->
             <form action="{% url 'logout' %}" method="post" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" style="background: none; border: none; color: #a9b1bd; cursor: pointer; font-size: 14px; margin-left: 20px; padding: 0;">Sair</button>
@@ -135,7 +249,7 @@
 
         <!-- Botões de Ação Rápida -->
         <div class="action-bar-right">
-            <button class="btn-orange" onclick="abrirModalAtendimento()">+ Novo Atendimento</button>
+            <button class="btn btn-orange" onclick="abrirModal('modalAtendimento')">+ Novo Atendimento</button>
         </div>
 
         <!-- Abas de Navegação -->
@@ -153,7 +267,7 @@
                     <h3>Minhas Oficinas</h3>
                     <span style="font-size: 13px;">{{ oficinas.count }} oficina(s) gerenciada(s)</span>
                 </div>
-                <button class="btn-orange" onclick="abrirModal()">+ Nova Oficina</button>
+                <button class="btn btn-orange" onclick="abrirModal('modalOficina')">+ Nova Oficina</button>
             </div>
 
             {% for oficina in oficinas %}
@@ -174,7 +288,7 @@
                     <div style="margin-top: 15px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
                         {% if oficina.mecanicos_equipe.count > 0 %}
                             <span style="color: #10b981;">👥 {{ oficina.mecanicos_equipe.count }} mecânico(s) vinculado(s)</span>
-                            <button onclick="abrirModalEquipe('{{ oficina.id }}')" style="background: none; border: none; color: #ff7b00; cursor: pointer; text-decoration: underline; font-weight: bold;">Ver Equipe</button>
+                            <button onclick="abrirModal('modalEquipe-{{ oficina.id }}')" style="background: none; border: none; color: #ff7b00; cursor: pointer; text-decoration: underline; font-weight: bold;">Ver Equipe</button>
                         {% else %}
                             <span>Nenhum mecânico vinculado ainda.</span>
                         {% endif %}
@@ -184,12 +298,11 @@
                 <!-- POP-UP COM OS DADOS DA EQUIPE DESTA OFICINA ESPECÍFICA -->
                 <div id="modalEquipe-{{ oficina.id }}" class="modal">
                     <div class="modal-content">
-                        <span class="close-btn" onclick="fecharModalEquipe('{{ oficina.id }}')">&times;</span>
-                        <h3>Equipe: {{ oficina.nome }}</h3>
-                        <p>Mecânicos que utilizaram o código desta oficina.</p>
+                        <span class="close-btn" onclick="fecharModal('modalEquipe-{{ oficina.id }}')">&times;</span>
+                        <h3 style="color: white; margin-top: 0;">Equipe: {{ oficina.nome }}</h3>
+                        <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Mecânicos que utilizaram o código desta oficina.</p>
                         
-                        <div style="margin-top: 20px; max-height: 300px; overflow-y: auto;">
-                            <!-- O Django faz um loop dentro da equipe desta oficina -->
+                        <div style="max-height: 300px; overflow-y: auto;">
                             {% for mecanico in oficina.mecanicos_equipe.all %}
                                 <div style="background-color: #1a1d24; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #2d3340; display: flex; align-items: center; gap: 15px;">
                                     <div class="avatar" style="width: 50px; height: 50px; font-size: 20px;">
@@ -256,14 +369,102 @@
             {% endfor %}
         {% endif %}
 
+        <!-- CONTEÚDO DA ABA BUSCAR PLACA -->
+        {% if aba_ativa == 'buscar' %}
+            <div class="section-header">
+                <div>
+                    <h3>Buscar Veículo</h3>
+                    <span style="font-size: 13px;">Consulte carros que já passaram pela sua oficina.</span>
+                </div>
+            </div>
+
+            <!-- Formulário de Busca -->
+            <div class="card-padrao" style="padding: 25px; margin-bottom: 20px;">
+                <form method="GET" action="/" style="display: flex; gap: 10px; align-items: flex-end;">
+                    <input type="hidden" name="tab" value="buscar">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                        <label>Digite a Placa:</label>
+                        <input type="text" name="placa_busca" class="form-control" placeholder="ABC1234" value="{{ placa_buscada }}" style="text-transform: uppercase;" required>
+                    </div>
+                    <button type="submit" class="btn btn-orange" style="height: 44px; padding: 0 30px;">Pesquisar</button>
+                </form>
+            </div>
+
+            <!-- Resultados da Busca -->
+            {% if busca_realizada %}
+                {% if veiculo_encontrado %}
+                    <!-- Carro Encontrado -->
+                    <div style="background-color: rgba(16, 185, 129, 0.05); padding: 20px; border-radius: 12px; border: 1px solid #10b981; margin-top: 20px;">
+                        <h4 style="color: #10b981; margin-top: 0; font-size: 18px;">✅ Veículo Encontrado no seu Histórico!</h4>
+                        <div style="display: flex; gap: 20px;">
+                            <div style="flex: 1;">
+                                <p style="margin: 5px 0;"><strong>Placa:</strong> <span class="text-highlight" style="text-transform: uppercase;">{{ veiculo_encontrado.placa }}</span></p>
+                                <p style="margin: 5px 0;"><strong>Veículo:</strong> <span class="text-highlight">{{ veiculo_encontrado.marca }} {{ veiculo_encontrado.modelo }} ({{ veiculo_encontrado.ano }})</span></p>
+                                <p style="margin: 5px 0;"><strong>Proprietário:</strong> <span class="text-highlight">{{ veiculo_encontrado.proprietario.first_name }} | Tel: {{ veiculo_encontrado.proprietario.telefone }}</span></p>
+                            </div>
+                            
+                            <div class="card-interno" style="flex: 1;">
+                                <h5 style="margin-top: 0; color: #ff7b00; margin-bottom: 10px;">Abrir Nova Ordem de Serviço</h5>
+                                <form method="POST" action="{% url 'nova_os_existente' veiculo_encontrado.id %}">
+                                    {% csrf_token %}
+                                    <textarea name="descricao_problema" class="form-control" rows="2" placeholder="Qual o problema relatado desta vez?" required style="margin-bottom: 10px;"></textarea>
+                                    <button type="submit" class="btn btn-orange" style="width: 100%;">Gerar O.S Rápida</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Carro NÃO Encontrado -->
+                    <div style="background-color: rgba(231, 76, 60, 0.05); padding: 30px; border-radius: 12px; border: 1px solid #e74c3c; text-align: center; margin-top: 20px;">
+                        <h4 style="color: #e74c3c; margin-top: 0; font-size: 20px;">❌ Veículo não encontrado.</h4>
+                        <p style="color: #a9b1bd; margin-bottom: 20px;">Este carro ainda não possui histórico com a sua equipe ou a placa foi digitada incorretamente.</p>
+                        <button class="btn btn-orange" onclick="abrirModal('modalAtendimento')">+ Registrar como Novo Atendimento</button>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+
+        <!-- CONTEÚDO DA ABA VEÍCULOS -->
+        {% if aba_ativa == 'veiculos' %}
+            <div class="section-header">
+                <div>
+                    <h3>Frota de Clientes</h3>
+                    <span style="font-size: 13px;">Todos os veículos que já foram atendidos nas suas oficinas.</span>
+                </div>
+            </div>
+
+            {% for carro in veiculos %}
+                <div class="card-padrao" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div>
+                            <h4 class="text-highlight" style="margin: 0 0 5px 0; font-size: 18px;">{{ carro.marca }} {{ carro.modelo }} ({{ carro.ano }})</h4>
+                            <p style="margin: 0; font-size: 13px; color: #a9b1bd;"><strong>Placa:</strong> <span style="text-transform: uppercase;">{{ carro.placa }}</span></p>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0 0 5px 0; font-size: 14px;"><strong class="text-highlight">Proprietário:</strong> <span class="text-highlight">{{ carro.proprietario.first_name }}</span></p>
+                        <p style="margin: 0; font-size: 13px; color: #a9b1bd;"><strong>Tel:</strong> {{ carro.proprietario.telefone|default:"Não informado" }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="text-align: center; padding: 50px 0; color: #a9b1bd;">
+                    <p>Nenhum veículo registado no histórico da sua oficina ainda.</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+
     </div>
+
+    <!-- ========================================== -->
+    <!-- MODAIS DO PAINEL ADMINISTRATIVO            -->
+    <!-- ========================================== -->
 
     <!-- Modal Novo Atendimento (Balcão) -->
     <div id="modalAtendimento" class="modal">
-        <div class="modal-content modal-content-large">
-            <span class="close-btn" onclick="fecharModalAtendimento()">&times;</span>
-            <h3>Novo Atendimento</h3>
-            <p>Registre a entrada de um veículo e crie o cadastro do cliente automaticamente.</p>
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalAtendimento')">&times;</span>
+            <h3 style="color: white; margin-top: 0; font-size: 20px;">Novo Atendimento</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 25px;">Registre a entrada de um veículo e crie o cadastro do cliente.</p>
             
             <form method="POST" action="{% url 'atendimento_balcao' %}">
                 {% csrf_token %}
@@ -311,7 +512,7 @@
                     <textarea name="descricao_problema" class="form-control" rows="3" placeholder="Descreva o que o cliente informou..." required></textarea>
                 </div>
 
-                <button type="submit" class="btn-orange btn-full">Salvar e Abrir Ordem de Serviço</button>
+                <button type="submit" class="btn btn-orange" style="width: 100%; margin-top: 10px;">Salvar e Abrir Ordem de Serviço</button>
             </form>
         </div>
     </div>
@@ -319,10 +520,10 @@
     <!-- Modal Nova Oficina -->
     <div id="modalOficina" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="fecharModal()">&times;</span>
-            <h3>Nova Oficina</h3>
-            <p>Crie uma nova oficina e convide mecânicos</p>
-            <!-- A ação do formulário envia para a página home com a aba de oficinas ativa, para que o usuário veja a oficina criada imediatamente. -->
+            <span class="close-btn" onclick="fecharModal('modalOficina')">&times;</span>
+            <h3 style="color: white; margin-top: 0; font-size: 20px;">Nova Oficina</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Crie uma nova oficina e convide mecânicos.</p>
+            
             <form method="POST" action="{% url 'home' %}?tab=oficinas">
                 {% csrf_token %}
                 <div class="form-group">
@@ -337,23 +538,165 @@
                     <label>Descrição</label>
                     <textarea name="descricao" class="form-control" rows="3" placeholder="Especialidades e serviços oferecidos..."></textarea>
                 </div>
-                <button type="submit" class="btn-orange btn-full">Criar Oficina</button>
+                <button type="submit" class="btn btn-orange" style="width: 100%; margin-top: 10px;">Criar Oficina</button>
             </form>
         </div>
     </div>
 
-    <script>
-        /* Funções do modal de Nova Oficina */
-        function abrirModal() { document.getElementById('modalOficina').style.display = 'flex'; }
-        function fecharModal() { document.getElementById('modalOficina').style.display = 'none'; }
-        
-        /* Funções do modal de Ver Equipe */
-        function abrirModalEquipe(id) { document.getElementById('modalEquipe-' + id).style.display = 'flex'; }
-        function fecharModalEquipe(id) { document.getElementById('modalEquipe-' + id).style.display = 'none'; }
+    <!-- Modal Meu Perfil (Universal) -->
+    <div id="modalPerfil" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalPerfil')">&times;</span>
+            <h3 style="color: white; margin-top: 0; font-size: 20px;">Meu Perfil</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Atualize seus dados pessoais e credenciais de acesso.</p>
+            
+            <form method="POST" action="{% url 'atualizar_perfil' %}">
+                {% csrf_token %}
+                
+                <h4 class="form-section-title">Dados Pessoais</h4>
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Nome</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Sobrenome</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group form-col-2">
+                        <label>E-mail (Login)</label>
+                        <input type="email" name="email" class="form-control" value="{{ request.user.email }}" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Telefone</label>
+                        <input type="text" name="telefone" class="form-control" value="{{ request.user.telefone|default:'' }}">
+                    </div>
+                </div>
 
-        /* Funções do modal de Novo Atendimento */
-        function abrirModalAtendimento() { document.getElementById('modalAtendimento').style.display = 'flex'; }
-        function fecharModalAtendimento() { document.getElementById('modalAtendimento').style.display = 'none'; }
+                <h4 class="form-section-title">Segurança</h4>
+                <div class="form-group">
+                    <label>Nova Senha</label>
+                    <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para não alterar a senha atual">
+                </div>
+
+                <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 15px;">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BARRA LATERAL DE NOTIFICAÇÕES -->
+    <div id="sidebarNotificacoes" class="notification-sidebar">
+        <div class="sidebar-header">
+            <h3>🔔 Notificações</h3>
+            <button class="close-sidebar" onclick="toggleSidebar()">X</button>
+        </div>
+        
+        <div class="notification-list">
+            {% for notificacao in notificacoes %}
+                <div class="notification-item {% if not notificacao.lida %}nao-lida{% endif %}">
+                    <p>{{ notificacao.mensagem }}</p>
+                    <small>{{ notificacao.criado_em|date:"d/m/Y H:i" }}</small>
+                </div>
+            {% empty %}
+                <div style="text-align: center; color: #a9b1bd; margin-top: 50px;">
+                    <span style="font-size: 40px; display: block; margin-bottom: 10px;">🔕</span>
+                    <p>Nenhuma notificação</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- POP-UP DE NOVAS SOLICITAÇÕES (Aparece no Login) -->
+    {% if mostrar_popup %}
+        <div id="modalNovasSolicitacoes" class="modal" style="display: flex;">
+            <div class="modal-content modal-content-nopadding">
+                <div style="background-color: #1a1d24; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340;">
+                    <h3 style="margin: 0; color: white; display: flex; align-items: center; gap: 10px;">
+                        <span style="background-color: rgba(255, 123, 0, 0.1); padding: 8px; border-radius: 50%; color: #f39c12; font-size: 14px;">🔔</span>
+                        Atualizações
+                    </h3>
+                    <span class="close-btn" style="position: static;" onclick="fecharPopupELer()">&times;</span>
+                </div>
+                
+                <div style="padding: 20px; max-height: 400px; overflow-y: auto;">
+                    <p style="color: #a9b1bd; margin-top: 0;">Você tem {{ notificacoes_nao_lidas }} aviso(s) da oficina.</p>
+                    
+                    {% for notificacao in notificacoes %}
+                        {% if not notificacao.lida %}
+                            <div style="background-color: #1a1d24; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #2d3340; border-left: 4px solid #3498db;">
+                                <p style="margin: 0; color: white; font-size: 14px;">{{ notificacao.mensagem }}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 11px; color: #a9b1bd;">{{ notificacao.criado_em|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <button onclick="fecharPopupELer()" class="btn btn-blue" style="width: 100%; margin-top: 10px;">Continuar para o Painel</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <script>
+        // Funções para Controle dos Modais Genéricos
+        function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Lógica de Notificações
+        function limparBolinhaNotificacao() {
+            fetch("{% url 'marcar_notificacoes_lidas' %}", { method: 'POST' })
+            .then(response => {
+                if(response.ok) {
+                    const badge = document.querySelector('.badge-notificacao');
+                    if(badge) badge.style.display = 'none';
+                    document.querySelectorAll('.notification-item.nao-lida').forEach(item => {
+                        item.classList.remove('nao-lida');
+                    });
+                }
+            });
+        }
+
+        function toggleSidebar() { 
+            const sidebar = document.getElementById('sidebarNotificacoes');
+            sidebar.classList.toggle('open');
+            if(sidebar.classList.contains('open')) {
+                limparBolinhaNotificacao();
+            }
+        }
+
+        function fecharPopupELer() {
+            document.getElementById('modalNovasSolicitacoes').style.display = 'none';
+            limparBolinhaNotificacao();
+        }
+
+        /* CONTROLE DO TEMA (CLARO/ESCURO) */
+        // Verifica a memória do navegador ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('autotrack_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if(themeBtn) themeBtn.innerText = '☀️';
+            }
+        });
+
+        // Alterna o tema e guarda a preferência
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            body.classList.toggle('light-theme');
+            
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('autotrack_theme', 'light');
+                themeBtn.innerText = '☀️';
+            } else {
+                localStorage.setItem('autotrack_theme', 'dark');
+                themeBtn.innerText = '🌙';
+            }
+        }
     </script>
 </body>
 </html>
