@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Administrativo - AutoTrack</title>
+    <title>Painel Administrativo - Trackmotor</title>
     <style>
         /* Base do Dark Mode inspirado no Figma */
         body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
@@ -673,7 +673,7 @@
         /* CONTROLE DO TEMA (CLARO/ESCURO) */
         // Verifica a memória do navegador ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('autotrack_theme');
+            const savedTheme = localStorage.getItem('trackmotor_theme');
             const themeBtn = document.getElementById('theme-toggle-btn');
             
             if (savedTheme === 'light') {
@@ -690,10 +690,10 @@
             body.classList.toggle('light-theme');
             
             if (body.classList.contains('light-theme')) {
-                localStorage.setItem('autotrack_theme', 'light');
+                localStorage.setItem('trackmotor_theme', 'light');
                 themeBtn.innerText = '☀️';
             } else {
-                localStorage.setItem('autotrack_theme', 'dark');
+                localStorage.setItem('trackmotor_theme', 'dark');
                 themeBtn.innerText = '🌙';
             }
         }

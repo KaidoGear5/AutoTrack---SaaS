@@ -1,48 +1,160 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoTrack - Concluir Serviço</title>
+    <title>Painel do Mecânico - Concluir Serviço</title>
+    <style>
+        /* Base do Dark Mode */
+        body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        
+        /* Navbar Superior */
+        .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 40px; height: 40px; background-color: #ff7b00; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .user-text strong { color: white; display: block; font-size: 16px; }
+        .user-text span { font-size: 12px; }
+        .nav-actions { display: flex; align-items: center; gap: 20px; }
+        .nav-actions a { color: #a9b1bd; text-decoration: none; font-size: 14px; font-weight: bold; transition: 0.3s; }
+        .nav-actions a:hover { color: white; }
+
+        /* Container e Cartões */
+        .container { padding: 40px; max-width: 700px; margin: 0 auto; }
+        .card-padrao { background-color: #222630; padding: 40px; border-radius: 12px; border: 1px solid #2d3340; }
+        
+        /* Caixa de Itens Aprovados */
+        .approved-box { background-color: #1a1d24; padding: 25px; border-radius: 8px; border: 1px solid #2d3340; margin-bottom: 25px; }
+        .approved-list { list-style: none; padding: 0; margin: 0; }
+        .approved-list li { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px dashed #2d3340; padding-bottom: 8px; color: white; font-size: 14px; }
+        .approved-list li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        
+        /* Botões */
+        .btn { padding: 14px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; font-family: inherit; text-align: center; }
+        .btn-blue { background-color: #3498db; color: white; }
+        .btn-blue:hover { background-color: #2980b9; }
+
+        /* Formulários */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; font-weight: bold; color: white; margin-bottom: 8px; }
+        textarea, input[type="text"] { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit; font-size: 14px; }
+        textarea:focus, input:focus { outline: none; border-color: #3498db; }
+        
+        /* Alerta Informativo */
+        .alert-info { background-color: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 6px; border-left: 4px solid #3498db; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        .alert-info p { color: #3498db; margin: 0; font-size: 13px; font-weight: bold; }
+
+        /* ========================================= */
+        /* TEMA CLARO (Overrides)                    */
+        /* ========================================= */
+        body.light-theme { background-color: #f4f6f8; color: #4b5563; }
+        body.light-theme .navbar, body.light-theme .card-padrao { background-color: #ffffff; border-color: #e5e7eb; }
+        
+        body.light-theme h2, body.light-theme strong, body.light-theme .user-text strong { color: #1f2937; }
+        body.light-theme .form-group label { color: #1f2937; }
+        body.light-theme textarea, body.light-theme input[type="text"] { color: #1f2937; background-color: #f9fafb; border-color: #d1d5db; }
+        
+        body.light-theme .approved-box { background-color: #f9fafb; border-color: #e5e7eb; }
+        body.light-theme .approved-list li { border-bottom-color: #d1d5db; color: #1f2937; }
+
+        /* Esconde o campo de valor (barrinha branca) gerado automaticamente pelo Django */
+        .form-group input {
+            display: none !important;
+        }
+    </style>
 </head>
-<body style="background-color: #2c3e50; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px;">
+<body>
 
-    <div style="background-color: #34495e; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); width: 600px; color: white;">
-        <h2 style="color: #3498db; text-align: center; margin-bottom: 5px;">Concluir Serviço</h2>
-        <p style="text-align: center; color: #bdc3c7; margin-bottom: 20px;">Veículo: {{ manutencao.veiculo }}</p>
-
-        <form method="POST">
-            {% csrf_token %}
-            
-            <label style="font-weight: bold; color: #bdc3c7;">Laudo Técnico Final *</label><br>
-            {{ form.diagnostico }}
-            
-            <hr style="border: 1px solid #2c3e50; margin: 25px 0;">
-
-            <strong style="color: #2ecc71;">Resumo dos Serviços e Peças Aprovados</strong>
-            <p style="font-size: 13px; color: #7f8c8d; margin-top: 5px;">Realize apenas as tarefas autorizadas abaixo:</p>
-            
-            <ul style="list-style-type: none; padding: 0; margin-top: 10px; font-size: 14px;">
-                {% for item in itens_aprovados %}
-                    <li style="display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #7f8c8d; padding-bottom: 5px;">
-                        <span>- {{ item.descricao }}</span>
-                        <span>R$ {{ item.preco }}</span>
-                    </li>
-                {% endfor %}
-            </ul>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; background-color: #2c3e50; padding: 15px; border-radius: 5px; margin-top: 20px; border: 1px solid #3498db;">
-                <strong style="color: #3498db; font-size: 16px;">Valor Total Autorizado</strong>
-                <strong style="color: #3498db; font-size: 18px;">R$ {{ manutencao.valor }}</strong>
+    <!-- Navbar Superior com Botão de Voltar -->
+    <div class="navbar">
+        <div class="user-info">
+            <div class="avatar">{{ request.user.first_name|first|default:"M" }}</div>
+            <div class="user-text">
+                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                <span>Mecânico · Trackmotor</span>
             </div>
-
-            <button type="submit" style="width: 100%; padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 25px; font-weight: bold;">
-                Salvar Laudo e Finalizar Manutenção
-            </button>
-        </form>
-
-        <div style="margin-top: 20px; text-align: center;">
-            <a href="{% url 'home' %}" style="color: #bdc3c7; text-decoration: none; font-size: 14px;">← Cancelar e Voltar ao Painel</a>
+        </div>
+        <div class="nav-actions">
+            <a href="{% url 'home' %}">⬅ Voltar ao Painel</a>
+            <button id="theme-toggle-btn" onclick="toggleTheme()" style="background: none; border: none; font-size: 18px; cursor: pointer;">🌙</button>
         </div>
     </div>
+
+    <div class="container">
+        <div class="card-padrao">
+            <h2 style="color: #3498db; text-align: center; margin-top: 0; margin-bottom: 5px;">Concluir Serviço</h2>
+            <p style="text-align: center; margin-bottom: 30px;">Veículo <strong>{{ manutencao.veiculo.marca }} {{ manutencao.veiculo.modelo }} - {{ manutencao.veiculo.placa }}</strong> do cliente <strong>{{ manutencao.veiculo.proprietario.first_name }}</strong>.</p>
+
+            <!-- RESUMO DO QUE FOI APROVADO -->
+            <div class="approved-box">
+                <h4 style="color: #10b981; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    ✅ Serviços e Peças Autorizados
+                </h4>
+                
+                <ul class="approved-list">
+                    {% for item in itens_aprovados %}
+                        <li>
+                            <span>{{ item.descricao }} {% if item.obrigatorio %}<small style="color: #f39c12;">(Mão de Obra)</small>{% endif %}</span>
+                            <strong>R$ {{ item.preco|floatformat:2 }}</strong>
+                        </li>
+                    {% empty %}
+                        <li><span style="color: #a9b1bd;">Nenhum item foi cobrado neste serviço.</span></li>
+                    {% endfor %}
+                </ul>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2d3340;">
+                    <strong style="color: #f39c12; font-size: 16px;">Valor Final Aprovado:</strong>
+                    <strong style="color: #10b981; font-size: 18px;">R$ {{ manutencao.valor|floatformat:2 }}</strong>
+                </div>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Diagnóstico Final e Observações *</label>
+                    {% for field in form %}
+                        {{ field }}
+                    {% endfor %}
+                </div>
+                
+                <div class="alert-info">
+                    <span style="font-size: 20px;">🔔</span>
+                    <p>Ao concluir, o cliente será notificado de que pode vir retirar o veículo.</p>
+                </div>
+
+                <button type="submit" class="btn btn-blue" style="width: 100%; font-size: 16px;">
+                    Registrar Conclusão
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* ========================================= */
+        /* CONTROLE DO TEMA (CLARO/ESCURO)           */
+        /* ========================================= */
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('trackmotor_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if(themeBtn) themeBtn.innerText = '☀️';
+            }
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            body.classList.toggle('light-theme');
+            
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('trackmotor_theme', 'light');
+                themeBtn.innerText = '☀️';
+            } else {
+                localStorage.setItem('trackmotor_theme', 'dark');
+                themeBtn.innerText = '🌙';
+            }
+        }
+    </script>
 </body>
 </html>

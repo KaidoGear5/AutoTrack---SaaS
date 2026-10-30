@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoTrack - Painel do Mecânico</title>
+    <title>Trackmotor - Painel do Mecânico</title>
     <style>
         /* Base do Dark Mode */
         body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
@@ -174,7 +174,7 @@
             <div class="avatar">{{ request.user.first_name|first|default:"M" }}</div>
             <div class="user-text">
                 <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                <span>Mecânico · AutoTrack</span>
+                <span>Mecânico · Trackmotor</span>
             </div>
         </div>
         <div class="nav-actions">
@@ -286,7 +286,7 @@
                                 <a href="{% url 'realizar_vistoria' servico.id %}" class="btn btn-orange" style="margin-top: 10px;">Realizar Vistoria</a>
                             {% elif servico.status == 'ANDAMENTO' %}
                                 <!-- Alterado: Agora chama a função JS para abrir o modal -->
-                                <button onclick="prepararModalConcluir('{{ servico.id }}', '{{ servico.veiculo|escapejs }}', '{{ servico.veiculo.proprietario.first_name|escapejs }}')" class="btn btn-blue" style="margin-top: 10px;">Concluir Serviço</button>
+                                <a href="{% url 'finish_maintenance' servico.id %}" class="btn btn-blue" style="text-decoration: none; padding: 10px 15px; font-size: 14px; margin-top: 10px;">Concluir Serviço</a>
                             {% endif %}
                         </div>
                     </div>
@@ -522,7 +522,7 @@
         /* CONTROLE DO TEMA (CLARO/ESCURO) */
         // Verifica a memória do navegador ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('autotrack_theme');
+            const savedTheme = localStorage.getItem('trackmotor_theme');
             const themeBtn = document.getElementById('theme-toggle-btn');
             
             if (savedTheme === 'light') {
@@ -539,10 +539,10 @@
             body.classList.toggle('light-theme');
             
             if (body.classList.contains('light-theme')) {
-                localStorage.setItem('autotrack_theme', 'light');
+                localStorage.setItem('trackmotor_theme', 'light');
                 themeBtn.innerText = '☀️';
             } else {
-                localStorage.setItem('autotrack_theme', 'dark');
+                localStorage.setItem('trackmotor_theme', 'dark');
                 themeBtn.innerText = '🌙';
             }
         }
