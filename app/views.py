@@ -44,6 +44,7 @@ def home(request):
         
         # Busca as O.S que ESTE mecânico assumiu
         meus_servicos = Maintenance.objects.filter(mecanico=request.user, status__in=['ACEITA', 'ANDAMENTO']).order_by('-criado_em')
+        meus_cancelamentos = Maintenance.objects.filter(mecanico=request.user, status__in=['CANCELAMENTO_SOLICITADO', 'CANCELAMENTO_REJEITADO']).order_by('-criado_em')
 
         # Notificações - Ordenando das mais recentes para as mais antigas
         todas_notificacoes = Notification.objects.filter(usuario=request.user).order_by('-criado_em')
@@ -58,7 +59,8 @@ def home(request):
             'erro': erro, # Mensagem de erro, se houver
             'notificacoes': minhas_notificacoes, # Envia a lista de notificações para a aba de notificações
             'notificacoes_nao_lidas': notificacoes_nao_lidas, # Envia a contagem de notificações não lidas para o HTML, para mostrar no ícone de sino
-            'mostrar_popup': mostrar_popup # Indica se o popup de notificações deve ser mostrado ou não
+            'mostrar_popup': mostrar_popup, # Indica se o popup de notificações deve ser mostrado ou não
+            'meus_cancelamentos': meus_cancelamentos, # Lista de cancelamentos solicitados ou rejeitados pelo mecânico logado
         }
         return render(request, 'mechanic_dashboard.html', contexto)
 
@@ -96,6 +98,7 @@ def home(request):
         placa_buscada = request.GET.get('placa_busca', '').strip().upper() # Pega a placa digitada na barra de busca, remove espaços e deixa maiúscula
         veiculo_encontrado = None
         busca_realizada = False
+        cancelamentos_pendentes = manutencoes_do_dono.filter(status='CANCELAMENTO_SOLICITADO')
 
         if placa_buscada:
             busca_realizada = True
@@ -116,7 +119,7 @@ def home(request):
         minhas_notificacoes = todas_notificacoes[:15]
 
         # Só mostra o popup se houver mensagens não lidas E se for a primeira vez que a página carrega sem nenhuma aba específica selecionada (sinal de que acabou de fazer login)
-        mostrar_popup = (notificacoes_nao_lidas > 0) and ('tab' not in request.GET)
+        mostrar_popup = (notificacoes_nao_lidas > 0)
 
         # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
@@ -132,7 +135,8 @@ def home(request):
             'veiculos': meus_veiculos, # Envia a lista de veículos para a aba de veículos
             'notificacoes': minhas_notificacoes, # Envia a lista de notificações para a aba de notificações
             'notificacoes_nao_lidas': notificacoes_nao_lidas, # Envia a contagem de notificações não lidas para o HTML, para mostrar no ícone de sino
-            'mostrar_popup': mostrar_popup # Indica se o popup de notificações deve ser mostrado ou não
+            'mostrar_popup': mostrar_popup, # Indica se o popup de notificações deve ser mostrado ou não
+            'cancelamentos_pendentes': cancelamentos_pendentes, # Lista de cancelamentos pendentes
         }
         return render(request, 'owner_dashboard.html', contexto)
         
@@ -423,29 +427,45 @@ def realizar_vistoria(request, id):
         form = VistoriaForm(request.POST, instance=manutencao)
         if form.is_valid():
             vistoria = form.save(commit=False)
+            # Pega todos os links enviados, remove os vazios e junta com vírgula
+            links_imagens = request.POST.getlist('link_imagem[]')
+            links_limpos = [link for link in links_imagens if link.strip()]
+            vistoria.imagens_evidencia = ", ".join(links_limpos)
             vistoria.save() # Salva o laudo principal
             
             # Tratamento das Peças e Serviços Dinâmicos
             descricoes = request.POST.getlist('descricao[]')
             precos = request.POST.getlist('preco[]')
             tipos = request.POST.getlist('tipo_item[]') 
+            quantidades = request.POST.getlist('quantidade[]') # Pega a lista de quantidades
             
             valor_total = 0
             vistoria.itens_servico.all().delete() 
             
-            for desc, preco, tipo in zip(descricoes, precos, tipos):
+            # O zip agora inclui a lista de 'quantidades'
+            for desc, preco, tipo, quant in zip(descricoes, precos, tipos, quantidades):
                 if desc and preco:
-                    preco_float = float(preco) 
+                    preco_float = float(preco)
+                    
+                    # Garante que a quantidade é um número inteiro (se vier vazio ou com erro, força 1)
+                    try:
+                        quant_int = int(quant)
+                    except (ValueError, TypeError):
+                        quant_int = 1
+                        
                     is_obrig = (tipo == 'MAO_DE_OBRA') 
 
                     ServiceItem.objects.create(
                         manutencao=vistoria,
                         descricao=desc,
-                        preco=preco_float,
+                        quantidade=quant_int, # Guarda a quantidade no banco de dados
+                        preco=preco_float,    # Guarda o Valor Unitário
                         obrigatorio=is_obrig,
                         aprovado=True 
                     )
-                    valor_total += preco_float 
+                    
+                    # Multiplica a quantidade pelo valor unitário para somar ao total da OS
+                    valor_total += (preco_float * quant_int) 
             
             vistoria.valor = valor_total 
             vistoria.status = 'AGUARDANDO_APROVACAO' 
@@ -479,11 +499,11 @@ def aprovar_vistoria(request, id):
         # Percorre todos os itens daquele orçamento
         for item in manutencao.itens_servico.all():
             # A Mão de Obra é sempre aprovada; as peças só se estiverem na lista do POST
-            # Regra de negócio: Se for obrigatório (Mão de Obra) OU se o cliente marcou no HTML, aprova.
-            # Convertos o item.id para string (str) porque o HTML sempre envia textos nas listas
+            # Convertemos o item.id para string (str) porque o HTML sempre envia textos nas listas
             if item.obrigatorio or str(item.id) in itens_aprovados_ids:
                 item.aprovado = True
-                valor_final += item.preco # Soma apenas o que foi aprovado
+                # NOVO: Multiplica o valor unitário pela quantidade da peça
+                valor_final += (item.preco * item.quantidade)
             else:
                 item.aprovado = False
             item.save()
@@ -549,6 +569,105 @@ def finish_maintenance(request, id):
         'itens_aprovados': manutencao.itens_servico.filter(aprovado=True) # Manda pro HTML só o que o cliente quis, para gerar a nota fiscal limpa
     }
     return render(request, 'finish_maintenance.html', contexto)
+
+# ==============================================================================
+# FLUXO DE CANCELAMENTO DE O.S.
+# ==============================================================================
+
+# MECÂNICO SOLICITA CANCELAMENTO
+@login_required(login_url='login')
+def solicitar_cancelamento(request, id):
+    if request.method == 'POST':
+        manutencao = get_object_or_404(Maintenance, id=id)
+        motivo = request.POST.get('motivo_cancelamento')
+        
+        manutencao.status = 'CANCELAMENTO_SOLICITADO'
+        manutencao.motivo_cancelamento_mec = motivo
+        
+        # Garante que o mecânico não perca o acesso à O.S
+        if not manutencao.mecanico:
+            manutencao.mecanico = request.user
+            
+        # CORREÇÃO: Se a O.S veio direto do cliente e não tem oficina, vincula à oficina deste mecânico agora!
+        if not manutencao.oficina and hasattr(request.user, 'oficina_vinculada') and request.user.oficina_vinculada:
+            manutencao.oficina = request.user.oficina_vinculada
+            
+        manutencao.save()
+        
+        # Notifica o Administrador
+        if manutencao.oficina and hasattr(manutencao.oficina, 'dono'):
+            Notification.objects.create(
+                usuario=manutencao.oficina.dono,
+                mensagem=f"Cancelamento Solicitado! O mecânico {request.user.first_name} pediu para cancelar a O.S do veículo {manutencao.veiculo.placa}."
+            )
+            
+        # Notifica o Cliente
+        Notification.objects.create(
+            usuario=manutencao.veiculo.proprietario,
+            mensagem=f"Aviso: O mecânico solicitou o cancelamento da ordem de serviço do seu {manutencao.veiculo.modelo}."
+        )
+            
+    return redirect('home')
+
+# ADMIN APROVA CANCELAMENTO (Exclui/Cancela de vez)
+@login_required(login_url='login')
+def aprovar_cancelamento(request, id):
+    if request.method == 'POST':
+        manutencao = get_object_or_404(Maintenance, id=id)
+        manutencao.status = 'CANCELADO'
+        manutencao.save()
+        
+        if manutencao.mecanico:
+            Notification.objects.create(
+                usuario=manutencao.mecanico,
+                mensagem=f"Cancelamento Aprovado. A O.S do veículo {manutencao.veiculo.placa} foi cancelada definitivamente."
+            )
+            
+        # Notifica o Cliente
+        Notification.objects.create(
+            usuario=manutencao.veiculo.proprietario,
+            mensagem=f"Cancelado: A solicitação de serviço do seu {manutencao.veiculo.modelo} foi cancelada pelo administrador da oficina."
+        )
+            
+    return redirect('/?tab=solicitacoes') # Redireciona para a aba de solicitações do Dono
+
+# ADMIN RECUSA CANCELAMENTO (Devolve para o Mecânico)
+@login_required(login_url='login')
+def recusar_cancelamento(request, id):
+    if request.method == 'POST':
+        manutencao = get_object_or_404(Maintenance, id=id)
+        motivo_admin = request.POST.get('motivo_recusa')
+        
+        manutencao.status = 'CANCELAMENTO_REJEITADO'
+        manutencao.motivo_recusa_admin = motivo_admin
+        manutencao.save()
+        
+        if manutencao.mecanico:
+            Notification.objects.create(
+                usuario=manutencao.mecanico,
+                mensagem=f"Cancelamento Negado! O Administrador recusou o cancelamento da O.S do veículo {manutencao.veiculo.placa}."
+            )
+            
+        # Notifica o Cliente de que o processo retomou
+        Notification.objects.create(
+            usuario=manutencao.veiculo.proprietario,
+            mensagem=f"Atualização: O cancelamento do seu {manutencao.veiculo.modelo} não prosseguiu. O mecânico dará continuidade."
+        )
+            
+    return redirect('/?tab=solicitacoes')
+
+# MECÂNICO DEVOLVE O.S PARA A FILA DE ESPERA (Após recusa do admin)
+@login_required(login_url='login')
+def devolver_a_fila(request, id):
+    if request.method == 'POST':
+        manutencao = get_object_or_404(Maintenance, id=id)
+        manutencao.status = 'PENDENTE'
+        manutencao.mecanico = None # Remove o mecânico atual, libertando a O.S para outros
+        manutencao.motivo_cancelamento_mec = None
+        manutencao.motivo_recusa_admin = None
+        manutencao.save()
+        
+    return redirect('home')
 
 # NOTIFICAÇÕES: MARCAR TODAS COMO LIDAS (Chamado via AJAX pelo JavaScript)
 @login_required

@@ -10,7 +10,7 @@
         /* Navbar Superior */
         .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
         .user-info { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 40px; height: 40px; background-color: #ff7b00; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .avatar { width: 40px; height: 40px; background-color: #f39c12; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .user-text strong { color: white; display: block; font-size: 16px; }
         .user-text span { font-size: 12px; }
         .nav-actions { display: flex; align-items: center; gap: 20px; }
@@ -18,13 +18,21 @@
         .nav-actions a:hover { color: white; }
 
         /* Container e Cartões */
-        .container { padding: 40px; max-width: 700px; margin: 0 auto; }
+        .container { padding: 40px; max-width: 800px; margin: 0 auto; }
         .card-padrao { background-color: #222630; padding: 40px; border-radius: 12px; border: 1px solid #2d3340; }
         
         /* Caixa de Itens Aprovados */
         .approved-box { background-color: #1a1d24; padding: 25px; border-radius: 8px; border: 1px solid #2d3340; margin-bottom: 25px; }
+        
+        /* Cabeçalho da Tabela de Orçamento */
+        .budget-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; font-weight: bold; color: #a9b1bd; border-bottom: 1px solid #2d3340; padding-bottom: 8px; }
+        .budget-header-left { flex: 1; padding-left: 0; }
+        .budget-header-right { display: flex; width: 220px; justify-content: space-between; text-align: right; }
+        .budget-col-unit { width: 100px; }
+        .budget-col-total { width: 100px; }
+
         .approved-list { list-style: none; padding: 0; margin: 0; }
-        .approved-list li { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px dashed #2d3340; padding-bottom: 8px; color: white; font-size: 14px; }
+        .approved-list li { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px dashed #2d3340; padding-bottom: 8px; color: white; font-size: 14px; align-items: center; }
         .approved-list li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         
         /* Botões */
@@ -54,6 +62,7 @@
         
         body.light-theme .approved-box { background-color: #f9fafb; border-color: #e5e7eb; }
         body.light-theme .approved-list li { border-bottom-color: #d1d5db; color: #1f2937; }
+        body.light-theme .budget-header { border-bottom-color: #d1d5db; color: #6b7280; }
 
         /* Esconde o campo de valor (barrinha branca) gerado automaticamente pelo Django */
         .form-group input {
@@ -89,11 +98,24 @@
                     ✅ Serviços e Peças Autorizados
                 </h4>
                 
-                <ul class="approved-list">
+                <div class="budget-header">
+                    <div class="budget-header-left">Qtd / Descrição</div>
+                    <div class="budget-header-right">
+                        <div class="budget-col-unit">Valor Unit.</div>
+                        <div class="budget-col-total">Subtotal</div>
+                    </div>
+                </div>
+
+                <ul class="approved-list" style="margin-top: 0;">
                     {% for item in itens_aprovados %}
                         <li>
-                            <span>{{ item.descricao }} {% if item.obrigatorio %}<small style="color: #f39c12;">(Mão de Obra)</small>{% endif %}</span>
-                            <strong>R$ {{ item.preco|floatformat:2 }}</strong>
+                            <div style="flex: 1;">
+                                <span style="color: white;">{{ item.quantidade|default:1 }}x {{ item.descricao }} {% if item.obrigatorio %}<small style="color: #f39c12;">(Mão de Obra)</small>{% endif %}</span>
+                            </div>
+                            <div class="budget-header-right" style="font-size: 13px;">
+                                <div class="budget-col-unit" style="color: #a9b1bd;">R$ {{ item.preco|floatformat:2 }}</div>
+                                <div class="budget-col-total" style="color: white; font-weight: bold;">R$ {% widthratio item.quantidade 1 item.preco %}</div>
+                            </div>
                         </li>
                     {% empty %}
                         <li><span style="color: #a9b1bd;">Nenhum item foi cobrado neste serviço.</span></li>

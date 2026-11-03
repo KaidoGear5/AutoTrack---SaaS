@@ -3,37 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <title>Trackmotor - Login</title>
+    <style>
+        /* Base do Dark Mode */
+        body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        
+        /* Tema Claro */
+        body.light-theme { background-color: #f4f6f8; color: #4b5563; }
+        
+        /* Aumentada a largura máxima para 480px */
+        .login-container { width: 100%; max-width: 600px; padding: 20px; box-sizing: border-box; }
+        
+        .login-card { background-color: #222630; padding: 50px 40px; border-radius: 12px; border: 1px solid #2d3340; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        body.light-theme .login-card { background-color: #ffffff; border-color: #e5e7eb; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        
+        /* Título e Subtítulo */
+        .login-card h2 { color: white; margin-top: 0; margin-bottom: 5px; font-size: 32px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        body.light-theme .login-card h2 { color: #1f2937; }
+        .logo-icon { background-color: rgba(243, 156, 18, 0.1); color: #f39c12; width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; }
+        
+        .login-subtitle { color: #a9b1bd; font-size: 14px; margin-bottom: 35px; display: block; }
+        body.light-theme .login-subtitle { color: #6b7280; }
+
+        /* Formulários */
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 8px; color: white; font-weight: bold; }
+        body.light-theme .form-group label { color: #4b5563; }
+        
+        .form-control { width: 100%; box-sizing: border-box; padding: 14px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit; font-size: 15px; transition: 0.3s; }
+        body.light-theme .form-control { background-color: #f9fafb; border-color: #d1d5db; color: #1f2937; }
+        .form-control:focus { outline: none; border-color: #f39c12; }
+        
+        /* Botões */
+        .btn { padding: 16px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-block; transition: 0.3s; width: 100%; font-size: 16px; font-family: inherit; margin-top: 10px; }
+        .btn-orange { background-color: #f39c12; color: white; }
+        .btn-orange:hover { background-color: #e67e22; }
+        
+        /* Links e Rodapé */
+        .footer-links { margin-top: 30px; border-top: 1px solid #2d3340; padding-top: 25px; }
+        body.light-theme .footer-links { border-color: #e5e7eb; }
+        .footer-links span { font-size: 14px; }
+        .footer-links a { color: #f39c12; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 8px; transition: 0.3s; font-size: 15px; }
+        .footer-links a:hover { color: #e67e22; text-decoration: underline; }
+
+        /* Mensagens de Erro */
+        .error-message { color: #e74c3c; font-size: 14px; font-weight: bold; margin-bottom: 15px; display: block; }
+    </style>
 </head>
-<body style="background-color: #f4f4f9; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<body>
 
-    <div style="background-color: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 300px; text-align: center;">
-        <h2 style="color: #2c3e50; margin-bottom: 20px;">Entrar no Trackmotor</h2>
+    <div class="login-container">
+        <div class="login-card">
+            <h2>
+                <div class="logo-icon">🔧</div>
+                Trackmotor
+            </h2>
+            <span class="login-subtitle">Gestão de Manutenção Automotiva</span>
 
-        <!-- Formulário de Login -->
-        <form method="POST">
-            {% csrf_token %}
+            <form method="POST">
+                {% csrf_token %}
+                
+                <!-- O Django pode passar mensagens de erro no login, mostramos aqui -->
+                {% if form.errors %}
+                    <span class="error-message">Usuário ou senha incorretos. Tente novamente.</span>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label>Usuário (E-mail):</label>
+                    <input type="text" name="username" class="form-control" placeholder="Seu e-mail de acesso" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label>Senha:</label>
+                    <input type="password" name="password" class="form-control" placeholder="Sua senha" required>
+                </div>
+
+                <button type="submit" class="btn btn-orange">Acessar Conta</button>
+            </form>
             
-            <div style="margin-bottom: 15px; text-align: left;">
-                <label style="font-weight: bold; color: #34495e;">Usuário:</label><br>
-                <input type="text" name="username" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;" required>
+            <div class="footer-links">
+                <span>Ainda não é cliente?</span><br>
+                <a href="{% url 'register' %}">Criar uma Conta Gratuita</a>
             </div>
-
-            <div style="margin-bottom: 20px; text-align: left;">
-                <label style="font-weight: bold; color: #34495e;">Senha:</label><br>
-                <input type="password" name="password" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;" required>
-            </div>
-
-            <button type="submit" style="width: 100%; padding: 10px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">
-                Acessar Conta
-            </button>
-        </form>
-        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-            <span style="color: #7f8c8d; font-size: 14px;">Ainda não é cliente?</span><br>
-            <a href="{% url 'register' %}" style="color: #8e44ad; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block; margin-top: 5px;">
-                Criar uma Conta Gratuita
-            </a>
         </div>
     </div>
 
+    <script>
+        // Carrega automaticamente o tema que o utilizador escolheu nos painéis
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('trackmotor_theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+        });
+    </script>
 </body>
 </html>

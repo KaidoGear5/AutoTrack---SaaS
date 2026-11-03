@@ -87,6 +87,9 @@ class Maintenance(models.Model):
     ('ANDAMENTO', 'Em Andamento'),            # Cliente aprovou, serviço rolando
     ('CONCLUIDO', 'Concluído'),               # Serviço finalizado e cobrado
     ('RECUSADA', 'Recusada'),                 # Cliente não aprovou o orçamento
+    ('CANCELAMENTO_SOLICITADO', 'Cancelamento Solicitado'), # Cliente pediu para cancelar, aguardando análise do administrador
+    ('CANCELAMENTO_REJEITADO', 'Cancelamento Rejeitado'),   # Administrador rejeitou o pedido de cancelamento
+    ('CANCELADO', 'Cancelado'),                             # Administrador aceitou o pedido de cancelamento, realizando o cancelamento da O.S
     )
     # Tipo da manutenção
     TIPO_CHOICES = (
@@ -102,7 +105,7 @@ class Maintenance(models.Model):
     diagnostico = models.TextField(blank=True, null=True)
     valor = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     diagnostico_vistoria = models.TextField(blank=True, null=True)
-    imagens_evidencia = models.URLField(blank=True, null=True) # Guarda o link da imagem
+    imagens_evidencia = models.TextField(blank=True, null=True) # Campo para armazenar links das imagens (separados por vírgula)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='PENDENTE')
     tipo = models.CharField(max_length=15, choices=TIPO_CHOICES)
     descricao_problema = models.TextField()
@@ -114,6 +117,9 @@ class Maintenance(models.Model):
     # auto_now_add=True: Pega a data e hora exata em que essa O.S foi criada automaticamente.
     criado_em = models.DateTimeField(auto_now_add=True)
     data_aceite = models.DateTimeField(blank=True, null=True) # Data e hora em que o mecânico aceitou a O.S
+    # Campos para o fluxo de cancelamento
+    motivo_cancelamento_mec = models.TextField(blank=True, null=True)
+    motivo_recusa_admin = models.TextField(blank=True, null=True)
 
     def __str__(self):
         # Mostra o carro e o status (Ex: "Honda Civic - Aguard. Aprovação")
@@ -125,6 +131,7 @@ class ServiceItem(models.Model):
     # as peças e serviços dela (CASCADE) são apagadas também.
     manutencao = models.ForeignKey(Maintenance, on_delete=models.CASCADE, related_name='itens_servico')
     descricao = models.CharField(max_length=255) # Ex: "Troca de pastilha de freio"
+    quantidade = models.IntegerField(default=1)
     preco = models.DecimalField(max_digits=10, decimal_places=2) # Ex: 250.00
     # CAMPOS PARA O ORÇAMENTO INTERATIVO
     # BooleanField = Verdadeiro (True) ou Falso (False)
@@ -140,6 +147,7 @@ class ServiceItem(models.Model):
 class MaintenanceItem(models.Model):
     manutencao = models.ForeignKey(Maintenance, on_delete=models.CASCADE, related_name='itens')
     nome_servico = models.CharField(max_length=100)
+    quantidade = models.IntegerField(default=1)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
 
 # 7. Notificações

@@ -100,6 +100,7 @@
         .header-title h1 { color: #f39c12; margin: 0; font-size: 32px; }
         .section-title { color: #3498db; margin-top: 50px; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
         .section-title.andamento { color: #cf9425; border-bottom-color: #cf9425; }
+        .section-title.cancelamentos { color: #e74c3c; border-bottom-color: #e74c3c; }
         
         /* Botões Globais */
         .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; text-align: center; font-family: inherit;}
@@ -114,12 +115,13 @@
 
         /* Cartões de Serviço (Fila e Andamento) */
         .card { background-color: #222630; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3340; display: flex; justify-content: space-between; align-items: center; }
-        .card.espera { border-left: 5px solid #e74c3c; }
+        .card.espera { border-left: 5px solid #3498db; }
         .card.andamento { border-left: 5px solid #cf9425; }
+        .card.cancelamento { border-left: 5px solid #e74c3c; }
         .card-info h4 { color: #f1c40f; font-size: 18px; margin: 0 0 5px 0; }
         .card-info p { margin: 5px 0; font-size: 14px; }
         .card-info strong { color: white; }
-        .card-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .card-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 180px; }
         
         .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; background-color: rgba(127, 140, 141, 0.2); color: white; }
 
@@ -233,6 +235,7 @@
                 </button>
             </div>
 
+            <!-- FILA DE ESPERA (Aguardando Atendimento) -->
             <h3 class="section-title">Fila de Espera (Aguardando Atendimento)</h3>
 
             {% if solicitacoes %}
@@ -249,10 +252,12 @@
                         </div>
                         
                         <div class="card-actions">
-                            <form action="{% url 'accept_maintenance' solicitacao.id %}" method="POST">
+                            <form action="{% url 'accept_maintenance' solicitacao.id %}" method="POST" style="width: 100%;">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-green">Aceitar Serviço</button>
+                                <button type="submit" class="btn btn-green" style="width: 100%; margin-bottom: 10px;">Aceitar Serviço</button>
                             </form>
+                            <!-- Novo Botão de Solicitar Cancelamento -->
+                            <button onclick="prepararModalCancelar('{{ solicitacao.id }}', '{{ solicitacao.veiculo|escapejs }}')" class="btn btn-red" style="width: 100%; padding: 8px; font-size: 12px;">Solicitar Cancelamento</button>
                         </div>
                     </div>
                 {% endfor %}
@@ -260,6 +265,49 @@
                 <div class="empty-box">
                     <p>Nenhum veículo aguardando manutenção no momento. Tudo tranquilo!</p>
                 </div>
+            {% endif %}
+
+            <!-- MEUS CANCELAMENTOS (SÓ APARECE SE EXISTIR ALGUM) -->
+            {% if meus_cancelamentos %}
+                <h3 class="section-title cancelamentos">Minhas Solicitações de Cancelamento</h3>
+                {% for cancelamento in meus_cancelamentos %}
+                    <div class="card cancelamento">
+                        <div class="card-info">
+                            <h4 style="color: #e74c3c;">{{ cancelamento.veiculo }}</h4>
+                            <p style="color: #bdc3c7;">Proprietário: {{ cancelamento.veiculo.proprietario.first_name }} | Tel: {{ cancelamento.veiculo.proprietario.telefone }}</p>
+                            <div style="margin-top: 15px;">
+                                <p><strong>Meu Motivo (Cancelamento):</strong> {{ cancelamento.motivo_cancelamento_mec }}</p>
+                                {% if cancelamento.status == 'CANCELAMENTO_REJEITADO' %}
+                                    <p style="color: #e74c3c; margin-top: 10px; background-color: rgba(231, 76, 60, 0.1); padding: 10px; border-radius: 5px;">
+                                        <strong>Recusado pelo Admin:</strong> {{ cancelamento.motivo_recusa_admin }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="card-actions">
+                            <span class="badge-status" {% if cancelamento.status == 'CANCELAMENTO_REJEITADO' %}style="background-color: #e74c3c;"{% endif %}>Status: {{ cancelamento.get_status_display }}</span>
+                            
+                            {% if cancelamento.status == 'CANCELAMENTO_REJEITADO' %}
+                                <div style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
+                                    <!-- Devolve a OS ao mecânico caso decida fazer o serviço -->
+                                    <form action="{% url 'accept_maintenance' cancelamento.id %}" method="POST" style="flex: 1;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-green" style="width: 100%; padding: 8px; font-size: 13px;">Aceitar</button>
+                                    </form>
+                                    
+                                    <!-- Novo botão: Devolve para a fila geral para outro mecânico pegar -->
+                                    <form action="{% url 'devolver_a_fila' cancelamento.id %}" method="POST" style="flex: 1;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-orange" style="width: 100%; padding: 8px; font-size: 13px;">Devolver à Fila</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <span style="font-size: 13px; color: #a9b1bd; margin-top: 10px; text-align: right; display: block;">Aguardando validação<br>do Administrador</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
             {% endif %}
 
             <!-- SERVIÇOS EM ANDAMENTO -->
@@ -285,7 +333,6 @@
                             {% if servico.status == 'ACEITA' %}
                                 <a href="{% url 'realizar_vistoria' servico.id %}" class="btn btn-orange" style="margin-top: 10px;">Realizar Vistoria</a>
                             {% elif servico.status == 'ANDAMENTO' %}
-                                <!-- Alterado: Agora chama a função JS para abrir o modal -->
                                 <a href="{% url 'finish_maintenance' servico.id %}" class="btn btn-blue" style="text-decoration: none; padding: 10px 15px; font-size: 14px; margin-top: 10px;">Concluir Serviço</a>
                             {% endif %}
                         </div>
@@ -362,23 +409,20 @@
         </div>
     </div>
 
-    <!-- Modal Concluir Serviço (Ação Dinâmica) -->
-    <div id="modalConcluir" class="modal">
+    <!-- Modal Solicitar Cancelamento de O.S. (NOVO) -->
+    <div id="modalCancelar" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="fecharModal('modalConcluir')">&times;</span>
-            <h3 style="color: white; margin-top: 0; font-size: 20px;">Concluir Serviço</h3>
-            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">O veículo <strong id="concluirVeiculo" style="color: #f39c12;"></strong> do cliente <strong id="concluirCliente" style="color: white;"></strong> está pronto?</p>
+            <span class="close-btn" onclick="fecharModal('modalCancelar')">&times;</span>
+            <h3 style="color: white; margin-top: 0; font-size: 20px;">Solicitar Cancelamento</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Por que a O.S do veículo <strong id="cancelarVeiculo" style="color: #e74c3c;"></strong> deve ser cancelada?</p>
             
-            <form id="formConcluir" method="POST">
+            <form id="formCancelar" method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label>Diagnóstico Final e Observações *</label>
-                    <textarea name="diagnostico" class="form-control" rows="5" placeholder="Descreva o que foi feito no veículo. Isso aparecerá na nota final do cliente..." required></textarea>
+                    <label>Motivo do Cancelamento *</label>
+                    <textarea name="motivo_cancelamento" class="form-control" rows="4" placeholder="Ex: Solicitação duplicada, cliente desistiu..." required></textarea>
                 </div>
-                <div style="background-color: rgba(46, 204, 113, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #2ecc71; margin-bottom: 15px;">
-                    <p style="margin: 0; font-size: 13px; color: #a9b1bd;">Ao concluir, o cliente será notificado de que pode vir retirar o veículo.</p>
-                </div>
-                <button type="submit" class="btn btn-blue" style="width: 100%;">Registrar Conclusão</button>
+                <button type="submit" class="btn btn-red" style="width: 100%;">Enviar para Análise do Administrador</button>
             </form>
         </div>
     </div>
@@ -483,13 +527,12 @@
         function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
         function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // Preparar Modal de Concluir Serviço
-        function prepararModalConcluir(id, veiculoNome, clienteNome) {
-            document.getElementById('concluirVeiculo').innerText = veiculoNome;
-            document.getElementById('concluirCliente').innerText = clienteNome;
-            let baseUrl = "{% url 'finish_maintenance' 999999 %}".replace('999999', id);
-            document.getElementById('formConcluir').action = baseUrl;
-            abrirModal('modalConcluir');
+        // Preparar Modal de Solicitar Cancelamento (NOVO)
+        function prepararModalCancelar(id, veiculoNome) {
+            document.getElementById('cancelarVeiculo').innerText = veiculoNome;
+            let baseUrl = "{% url 'solicitar_cancelamento' 999999 %}".replace('999999', id);
+            document.getElementById('formCancelar').action = baseUrl;
+            abrirModal('modalCancelar');
         }
 
         // Lógica de Notificações

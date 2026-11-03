@@ -22,6 +22,12 @@ urlpatterns = [
     path('aceitar-servico/<int:id>/', views.accept_maintenance, name='accept_maintenance'),
     # Rota para o mecânico concluir a manutenção
     path('concluir-servico/<int:id>/', views.finish_maintenance, name='finish_maintenance'),
+    # Rotas de Cancelamento
+    path('solicitar-cancelamento/<int:id>/', views.solicitar_cancelamento, name='solicitar_cancelamento'),
+    path('aprovar-cancelamento/<int:id>/', views.aprovar_cancelamento, name='aprovar_cancelamento'),
+    path('recusar-cancelamento/<int:id>/', views.recusar_cancelamento, name='recusar_cancelamento'),
+    # Rota para o mecânico devolver a solicitação de manutenção para a fila de solicitações
+    path('devolver-fila/<int:id>/', views.devolver_a_fila, name='devolver_a_fila'),
     # Rota para o mecânico realizar a vistoria
     path('realizar-vistoria/<int:id>/', views.realizar_vistoria, name='realizar_vistoria'),
     # Rota para o cliente aprovar ou recusar a vistoria

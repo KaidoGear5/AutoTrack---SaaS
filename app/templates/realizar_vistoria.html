@@ -10,7 +10,7 @@
         /* Navbar Superior */
         .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
         .user-info { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 40px; height: 40px; background-color: #ff7b00; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .avatar { width: 40px; height: 40px; background-color: #f39c12; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .user-text strong { color: white; display: block; font-size: 16px; }
         .user-text span { font-size: 12px; }
         .nav-actions { display: flex; align-items: center; gap: 20px; }
@@ -18,26 +18,33 @@
         .nav-actions a:hover { color: white; }
 
         /* Container e Cartões */
-        .container { padding: 40px; max-width: 800px; margin: 0 auto; }
+        .container { padding: 40px; max-width: 900px; margin: 0 auto; }
         .card-padrao { background-color: #222630; padding: 40px; border-radius: 12px; border: 1px solid #2d3340; }
         .card-interno { background-color: #1a1d24; padding: 20px; border-radius: 8px; border: 1px solid #2d3340; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
         
         /* Botões */
         .btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; font-family: inherit; text-align: center; }
-        .btn-orange { background-color: #ff7b00; color: white; }
-        .btn-orange:hover { background-color: #e66e00; }
+        .btn-orange { background-color: #f39c12; color: white; }
+        .btn-orange:hover { background-color: #e67e22; }
         .btn-green { background-color: #10b981; color: white; }
         .btn-green:hover { background-color: #059669; }
         .btn-red { background-color: #e74c3c; color: white; padding: 12px 16px; border-radius: 6px; }
         .btn-red:hover { background-color: #c0392b; }
 
-        /* Formulários (Forçando estilo nos inputs gerados pelo Django) */
+        /* Formulários */
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 14px; font-weight: bold; color: #ff7b00; margin-bottom: 8px; }
+        .form-group label { display: block; font-size: 14px; font-weight: bold; color: #f39c12; margin-bottom: 8px; }
         textarea, input[type="text"], input[type="number"], input[type="url"] { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit; font-size: 14px; }
-        textarea:focus, input:focus { outline: none; border-color: #ff7b00; }
+        textarea:focus, input:focus { outline: none; border-color: #f39c12; }
         
         hr { border: 0; border-top: 1px solid #2d3340; margin: 30px 0; }
+
+        /* Labels da Tabela de Orçamento */
+        .table-labels { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; font-weight: bold; color: #a9b1bd; padding-right: 54px; }
+        .label-qtd { width: 80px; }
+        .label-item { flex: 2; }
+        .label-valor { width: 130px; }
+        .label-subtotal { width: 120px; text-align: right; }
 
         /* ========================================= */
         /* TEMA CLARO (Overrides)                    */
@@ -48,23 +55,22 @@
         
         body.light-theme h2, body.light-theme strong, body.light-theme .user-text strong { color: #1f2937; }
         body.light-theme textarea, body.light-theme input[type="text"], body.light-theme input[type="number"], body.light-theme input[type="url"] { color: #1f2937; background-color: #f9fafb; border-color: #d1d5db; }
-        body.light-theme textarea:focus, body.light-theme input:focus { border-color: #ff7b00; }
+        body.light-theme textarea:focus, body.light-theme input:focus { border-color: #f39c12; }
         body.light-theme hr { border-top-color: #e5e7eb; }
+        body.light-theme .table-labels { color: #6b7280; }
         
-        /* Input de Mão de Obra inativo no Dark/Light Mode */
         input[readonly] { background-color: #2d3340 !important; color: #a9b1bd !important; cursor: not-allowed; }
         body.light-theme input[readonly] { background-color: #e5e7eb !important; color: #6b7280 !important; }
     </style>
 </head>
 <body>
 
-    <!-- Navbar Superior com Botão de Voltar -->
     <div class="navbar">
         <div class="user-info">
             <div class="avatar">{{ request.user.first_name|first|default:"M" }}</div>
             <div class="user-text">
                 <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                <span>Mecânico · AutoTrack</span>
+                <span>Mecânico · Trackmotor</span>
             </div>
         </div>
         <div class="nav-actions">
@@ -75,7 +81,7 @@
 
     <div class="container">
         <div class="card-padrao">
-            <h2 style="color: #ff7b00; text-align: center; margin-top: 0; margin-bottom: 5px;">Realizar Vistoria</h2>
+            <h2 style="color: #f39c12; text-align: center; margin-top: 0; margin-bottom: 5px;">Realizar Vistoria</h2>
             <p style="text-align: center; margin-bottom: 30px;">Veículo: <strong>{{ manutencao.veiculo.marca }} {{ manutencao.veiculo.modelo }} - {{ manutencao.veiculo.placa }}</strong></p>
 
             <form method="POST">
@@ -87,26 +93,42 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Imagens de Evidência (Link URL)</label>
-                    {{ form.imagens_evidencia }}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="margin-bottom: 0;">Imagens de Evidência (Links URL)</label>
+                        <button type="button" class="btn btn-green" onclick="adicionarLinkImagem()" style="padding: 4px 10px; font-size: 12px;">+ Adicionar Link</button>
+                    </div>
+                    <div id="links-container">
+                        <input type="url" name="link_imagem[]" placeholder="Cole o link da imagem aqui..." style="margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px;">
+                    </div>
                 </div>
                 
                 <hr>
 
                 <!-- SEÇÃO DE ORÇAMENTO PRÉVIO -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <label style="margin-bottom: 0;">Orçamento: Serviços e Peças</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <label style="margin-bottom: 0; font-weight: bold; color: #f39c12; font-size: 16px;">Orçamento: Serviços e Peças</label>
                     <button type="button" class="btn btn-green" onclick="adicionarItem()" style="padding: 8px 15px; font-size: 13px;">
                         + Adicionar Peça
                     </button>
                 </div>
 
+                <!-- CABEÇALHO DA TABELA -->
+                <div class="table-labels">
+                    <div class="label-qtd">Qtd</div>
+                    <div class="label-item">Item</div>
+                    <div class="label-valor">Valor Unit. (R$)</div>
+                    <div class="label-subtotal">Subtotal</div>
+                </div>
+
                 <div id="itens-container">
-                    <!-- 1. MÃO DE OBRA (FIXA E OBRIGATÓRIA) -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
-                        <input type="text" name="descricao[]" value="Mão de Obra" readonly style="flex: 3; font-weight: bold;">
+                    <!-- 1. MÃO DE OBRA -->
+                    <div class="item-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                        <input type="number" name="quantidade[]" value="1" min="1" required style="width: 80px;" oninput="calcularTotal()">
+                        <input type="text" name="descricao[]" value="Mão de Obra" readonly style="flex: 2; font-weight: bold;">
                         <input type="hidden" name="tipo_item[]" value="MAO_DE_OBRA">
-                        <input type="number" step="0.01" name="preco[]" placeholder="R$ Valor" required style="flex: 1;" oninput="calcularTotal()">
+                        <input type="number" step="0.01" name="preco[]" placeholder="0,00" required style="width: 130px;" oninput="calcularTotal()">
+                        
+                        <div class="linha-subtotal" style="width: 120px; text-align: right; color: #10b981; font-weight: bold; font-size: 15px;">R$ 0,00</div>
                         
                         <!-- Espaço vazio para alinhar com os botões 'X' -->
                         <div style="width: 44px;"></div> 
@@ -114,8 +136,8 @@
                 </div>
 
                 <div class="card-interno">
-                    <strong style="color: #ff7b00; font-size: 16px;">$ Total Previsto</strong>
-                    <strong id="valor-total-display" style="color: #10b981; font-size: 20px;">R$ 0,00</strong>
+                    <strong style="color: #f39c12; font-size: 16px;">$ Total Previsto</strong>
+                    <strong id="valor-total-display" style="color: #10b981; font-size: 22px;">R$ 0,00</strong>
                 </div>
                 
                 <button type="submit" class="btn btn-orange" style="width: 100%; margin-top: 25px; font-size: 16px;">
@@ -126,27 +148,59 @@
     </div>
 
     <script>
-        // Função para calcular o total
+        // Função para calcular o subtotal de cada linha e o total geral
         function calcularTotal() {
-            let total = 0;
-            const precos = document.querySelectorAll('input[name="preco[]"]');
-            precos.forEach(function(input) {
-                let valor = parseFloat(input.value);
-                if (!isNaN(valor)) total += valor;
+            let totalGeral = 0;
+            const linhas = document.querySelectorAll('.item-row');
+            
+            linhas.forEach(function(linha) {
+                const qtdInput = linha.querySelector('input[name="quantidade[]"]');
+                const precoInput = linha.querySelector('input[name="preco[]"]');
+                const subtotalDisplay = linha.querySelector('.linha-subtotal');
+                
+                let qtd = parseInt(qtdInput.value) || 0;
+                let preco = parseFloat(precoInput.value) || 0;
+                let subtotal = qtd * preco;
+                
+                // Atualiza o subtotal da linha
+                subtotalDisplay.innerText = subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                
+                totalGeral += subtotal;
             });
-            document.getElementById('valor-total-display').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            // Atualiza o total final
+            document.getElementById('valor-total-display').innerText = totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         // Função para adicionar nova peça dinamicamente
         function adicionarItem() {
             const container = document.getElementById('itens-container');
             const row = document.createElement('div');
+            row.className = 'item-row';
             row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
             row.innerHTML = `
-                <input type="text" name="descricao[]" placeholder="Ex: Pastilha de Freio..." required style="flex: 3;">
+                <input type="number" name="quantidade[]" value="1" min="1" required style="width: 80px;" oninput="calcularTotal()">
+                <input type="text" name="descricao[]" placeholder="Ex: Pastilha de Freio..." required style="flex: 2;">
                 <input type="hidden" name="tipo_item[]" value="PECA">
-                <input type="number" step="0.01" name="preco[]" placeholder="R$ 0,00" required style="flex: 1;" oninput="calcularTotal()">
+                <input type="number" step="0.01" name="preco[]" placeholder="0,00" required style="width: 130px;" oninput="calcularTotal()">
+                
+                <div class="linha-subtotal" style="width: 120px; text-align: right; color: #10b981; font-weight: bold; font-size: 15px;">R$ 0,00</div>
+                
                 <button type="button" class="btn-red" onclick="this.parentElement.remove(); calcularTotal();" style="border: none; cursor: pointer; font-weight: bold;">X</button>
+            `;
+            container.appendChild(row);
+            
+            // Recalcula logo ao criar para garantir que os valores estão zerados ou padronizados
+            calcularTotal();
+        }
+
+        function adicionarLinkImagem() {
+            const container = document.getElementById('links-container');
+            const row = document.createElement('div');
+            row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
+            row.innerHTML = `
+                <input type="url" name="link_imagem[]" placeholder="Cole o novo link aqui..." style="flex: 1; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px;">
+                <button type="button" class="btn-red" onclick="this.parentElement.remove();" style="border: none; cursor: pointer; font-weight: bold; border-radius: 6px;">X</button>
             `;
             container.appendChild(row);
         }
@@ -155,7 +209,7 @@
         /* CONTROLE DO TEMA (CLARO/ESCURO)           */
         /* ========================================= */
         document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('autotrack_theme');
+            const savedTheme = localStorage.getItem('trackmotor_theme');
             const themeBtn = document.getElementById('theme-toggle-btn');
             
             if (savedTheme === 'light') {
@@ -171,10 +225,10 @@
             body.classList.toggle('light-theme');
             
             if (body.classList.contains('light-theme')) {
-                localStorage.setItem('autotrack_theme', 'light');
+                localStorage.setItem('trackmotor_theme', 'light');
                 themeBtn.innerText = '☀️';
             } else {
-                localStorage.setItem('autotrack_theme', 'dark');
+                localStorage.setItem('trackmotor_theme', 'dark');
                 themeBtn.innerText = '🌙';
             }
         }
