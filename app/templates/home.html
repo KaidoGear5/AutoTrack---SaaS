@@ -179,6 +179,17 @@
         .modal-content { background-color: #222630; border-radius: 12px; width: 450px; max-width: 90%; border: 1px solid #2d3340; position: relative; padding: 30px; text-align: left;}
         .close-btn { color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; position: absolute; right: 20px; top: 20px;}
         .close-btn:hover { color: white; }
+
+        /* CSS DA PAGINAÇÃO */
+        .pagination { display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 10px; padding-bottom: 20px;}
+        .page-link { background-color: #2d3340; color: #a9b1bd; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.3s; font-size: 13px; }
+        .page-link:hover { background-color: #f39c12; color: white; }
+        .page-active { background-color: #f39c12; color: white; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .page-disabled { background-color: #222630; color: #6b7280; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: not-allowed; border: 1px solid #2d3340; font-size: 13px; }
+        
+        body.light-theme .page-link { background-color: #f3f4f6; color: #4b5563; }
+        body.light-theme .page-link:hover { background-color: #f39c12; color: white; }
+        body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
     </style>
 </head>
 <body>
@@ -408,6 +419,29 @@
             <div style="text-align: center; padding: 50px 0; background-color: #222630; border-radius: 12px;">
                 <p>Você ainda não solicitou nenhuma manutenção.</p>
             </div>
+        {% endif %}
+
+        <!-- BLOCO DE PAGINAÇÃO DO CLIENTE (COLE AQUI!) -->
+        {% if manutencoes_para_tela.has_other_pages %}
+        <div class="pagination">
+            {% if manutencoes_para_tela.has_previous %}
+                <a href="?page=1" class="page-link">&laquo; Primeira</a>
+                <a href="?page={{ manutencoes_para_tela.previous_page_number }}" class="page-link">Anterior</a>
+            {% else %}
+                <span class="page-disabled">&laquo; Primeira</span>
+                <span class="page-disabled">Anterior</span>
+            {% endif %}
+
+            <span class="page-active">Página {{ manutencoes_para_tela.number }} de {{ manutencoes_para_tela.paginator.num_pages }}</span>
+
+            {% if manutencoes_para_tela.has_next %}
+                <a href="?page={{ manutencoes_para_tela.next_page_number }}" class="page-link">Próxima</a>
+                <a href="?page={{ manutencoes_para_tela.paginator.num_pages }}" class="page-link">Última &raquo;</a>
+            {% else %}
+                <span class="page-disabled">Próxima</span>
+                <span class="page-disabled">Última &raquo;</span>
+            {% endif %}
+        </div>
         {% endif %}
 
     </div>

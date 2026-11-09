@@ -41,11 +41,18 @@ def home(request):
             else:
                 erro = "Código inválido. Verifique com o dono da oficina e tente novamente."
 
-        # Busca as O.S que ninguém pegou ainda, especificamente DESTA oficina, ignorando a Fila de Espera
+        # Busca as O.S que ninguém pegou ainda, mas apenas da oficina que o mecânico está vinculado
         fila_de_espera = Maintenance.objects.filter(oficina=request.user.oficina_vinculada, status='PENDENTE').order_by('-criado_em')
+        paginator_fila = Paginator(fila_de_espera, 5)
+        page_fila = request.GET.get('page_fila')
+        solicitacoes_paginadas = paginator_fila.get_page(page_fila)
         
         # Busca as O.S que ESTE mecânico assumiu
         meus_servicos = Maintenance.objects.filter(mecanico=request.user, status__in=['ACEITA', 'ANDAMENTO']).order_by('-criado_em')
+        paginator_servicos = Paginator(meus_servicos, 5)
+        page_servicos = request.GET.get('page_servicos')
+        servicos_paginados = paginator_servicos.get_page(page_servicos)
+        # Busca os cancelamentos solicitados ou rejeitados pelo mecânico
         meus_cancelamentos = Maintenance.objects.filter(mecanico=request.user, status__in=['CANCELAMENTO_SOLICITADO', 'CANCELAMENTO_REJEITADO']).order_by('-criado_em')
 
         # Notificações - Ordenando das mais recentes para as mais antigas
@@ -56,8 +63,8 @@ def home(request):
 
         # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
-            'solicitacoes': fila_de_espera, # Lista de solicitações de manutenção aguardando atendimento, para mostrar no painel
-            'meus_servicos': meus_servicos, # Lista de serviços do mecânico logado, para mostrar no painel
+            'solicitacoes': solicitacoes_paginadas, # Lista de solicitações de manutenção da oficina do mecânico logado, para mostrar na aba de fila de espera
+            'meus_servicos': servicos_paginados, # Lista de serviços que o mecânico logado assumiu, para mostrar na aba de meus serviços
             'erro': erro, # Mensagem de erro, se houver
             'notificacoes': minhas_notificacoes, # Envia a lista de notificações para a aba de notificações
             'notificacoes_nao_lidas': notificacoes_nao_lidas, # Envia a contagem de notificações não lidas para o HTML, para mostrar no ícone de sino
@@ -97,6 +104,11 @@ def home(request):
         total_andamento = manutencoes_do_dono.filter(status__in=['ACEITA', 'AGUARDANDO_APROVACAO', 'ANDAMENTO']).count()
         # 4. Conta os Concluídos (status CONCLUIDO)
         total_concluidos = manutencoes_do_dono.filter(status='CONCLUIDO').count()
+
+        # --- FILA DE ESPERA EXTERNA (LOTAÇÃO) ---
+        fila_espera_externa = Maintenance.objects.filter(oficina__in=minhas_oficinas, status='AGUARDANDO_VAGA').order_by('-criado_em')
+        total_espera_externa = fila_espera_externa.count()
+
         placa_buscada = request.GET.get('placa_busca', '').strip().upper() # Pega a placa digitada na barra de busca, remove espaços e deixa maiúscula
         veiculo_encontrado = None
         busca_realizada = False
@@ -145,6 +157,8 @@ def home(request):
             'mostrar_popup': mostrar_popup, # Indica se o popup de notificações deve ser mostrado ou não
             'cancelamentos_pendentes': cancelamentos_pendentes, # Lista de cancelamentos pendentes
             'paginator': paginator, # Envia o objeto de paginação para o HTML, para criar os links de navegação entre páginas
+            'fila_espera_externa': fila_espera_externa, # Envia a lista de solicitações em espera externa para o HTML
+            'total_espera_externa': total_espera_externa, # Envia a contagem de solicitações em espera externa para o HTML
         }
         return render(request, 'owner_dashboard.html', contexto)
         
@@ -155,6 +169,9 @@ def home(request):
         
         # Busca o histórico de manutenções apenas dos VEÍCULOS desse cliente específico
         minhas_manutencoes = Maintenance.objects.filter(veiculo__proprietario=request.user).order_by('-criado_em')
+        paginator_cliente = Paginator(minhas_manutencoes, 5)
+        page_cliente = request.GET.get('page')
+        manutencoes_paginadas = paginator_cliente.get_page(page_cliente)
 
         # --- CORREÇÃO: Busca as oficinas para enviar para o HTML do cliente ---
         oficinas_disponiveis = Workshop.objects.all().distinct()
@@ -167,8 +184,8 @@ def home(request):
         
         contexto = {
             'carros_para_tela': meus_carros,
-            'manutencoes_para_tela': minhas_manutencoes, # Envia a lista para o HTML, para mostrar na aba de histórico de manutenções
-            'oficinas_para_tela': oficinas_disponiveis, # NOVO: Envia as oficinas para o menu de seleção!
+            'manutencoes_para_tela': manutencoes_paginadas, # Envia as manutenções para a tela do cliente, paginadas
+            'oficinas_para_tela': oficinas_disponiveis, # Envia as oficinas para o menu de seleção!
             'notificacoes': minhas_notificacoes,
             'notificacoes_nao_lidas': notificacoes_nao_lidas,
             'mostrar_popup': mostrar_popup
