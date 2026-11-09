@@ -80,6 +80,19 @@
         body.light-theme .notification-item small {
         color: #6b7280 !important;
         }
+
+        /* SISTEMA DE ALERTAS */
+        .alert-box { padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid transparent; }
+        .alert-error { background-color: rgba(231, 76, 60, 0.1); border-color: #e74c3c; color: #e74c3c; }
+        .alert-success { background-color: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
+        .alert-warning { background-color: rgba(243, 156, 18, 0.1); border-color: #f39c12; color: #f39c12; }
+        
+        /* COR ESPECIAL PARA O STATUS 'AGUARDANDO VAGA' */
+        .status-aguardando-vaga { 
+            background-color: rgba(231, 76, 60, 0.1) !important; 
+            color: #e74c3c !important; 
+            border: 1px solid #e74c3c !important; 
+        }
         
         /* Navbar Superior */
         .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
@@ -198,6 +211,16 @@
     </div>
 
     <div class="container">
+        <!-- SISTEMA DE MENSAGENS DE ALERTA -->
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div class="alert-box {% if message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
+                        <strong>{{ message }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         
         <!-- Ações Principais (Agora abrem Modais) -->
         <div style="display: flex; gap: 15px; margin-bottom: 40px;">
@@ -245,7 +268,9 @@
                             <p><strong>Data da Solicitação:</strong> {{ manutencao.criado_em|date:"d/m/Y" }} às {{ manutencao.criado_em|date:"H:i" }}</p>
                         </div>
                         <div class="history-info" style="text-align: right;">
-                            <span class="badge-status">{{ manutencao.get_status_display }}</span>
+                            <span class="badge-status {% if manutencao.status == 'AGUARDANDO_VAGA' %}status-aguardando-vaga{% endif %}">
+                            {{ manutencao.get_status_display }}
+                            </span>
                             <p style="margin-top: 15px;"><strong>Mecânico Responsável:</strong> {{ manutencao.mecanico.first_name|default:"Aguardando" }}</p>
                             {% if manutencao.data_aceite %}
                                 <p><strong>Aceite em:</strong> {{ manutencao.data_aceite|date:"d/m/Y H:i" }}</p>
@@ -256,6 +281,25 @@
                     <div style="background-color: #1a1d24; padding: 10px 15px; border-radius: 6px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px;"><strong>Problema Relatado:</strong> {{ manutencao.descricao_problema }}</p>
                     </div>
+
+                    <!-- FILA DE ESPERA (OPÇÕES DO CLIENTE) -->
+                    {% if manutencao.status == 'AGUARDANDO_VAGA' %}
+                        <div class="diag-box" style="border-left: 4px solid #e74c3c;">
+                            <strong style="color: #e74c3c;">⚠️ Sua O.S está na Fila de Espera</strong>
+                            <p style="font-size: 14px; color: #a9b1bd; margin-bottom: 0;">A oficina selecionada estava lotada. Você pode aguardar abrir uma vaga e tentar reenviar para verificação, ou cancelar esta solicitação.</p>
+                            
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <form action="{% url 'reenviar_os_cliente' manutencao.id %}" method="POST" style="flex: 1;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-orange" style="width: 100%;">🔄 Tentar Enviar Novamente</button>
+                                </form>
+                                <form action="{% url 'cancelar_os_cliente' manutencao.id %}" method="POST" style="flex: 1;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-red" style="width: 100%;">X Cancelar Solicitação</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
 
                     <!-- VISTORIA (AGUARDANDO APROVAÇÃO) -->
                     {% if manutencao.status == 'AGUARDANDO_APROVACAO' %}
@@ -419,6 +463,17 @@
                         <option value="" disabled selected>Selecione um veículo da sua garagem...</option>
                         {% for carro in carros_para_tela %}
                             <option value="{{ carro.id }}">{{ carro.marca }} {{ carro.modelo }} ({{ carro.placa }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- NOVO CAMPO: SELEÇÃO DE OFICINA -->
+                <div class="form-group">
+                    <label>Para qual oficina deseja enviar? *</label>
+                    <select name="oficina" class="form-control" required>
+                        <option value="" disabled selected>Selecione a oficina mecânica...</option>
+                        {% for ofc in oficinas_para_tela %}
+                            <option value="{{ ofc.id }}">{{ ofc.nome }}</option>
                         {% endfor %}
                     </select>
                 </div>

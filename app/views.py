@@ -15,6 +15,8 @@ from django.utils import timezone # Ferramenta para pegar a data e hora exata de
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import update_session_auth_hash # Ferramenta para atualizar a sessão do usuário após alterar a senha, evitando que ele seja desconectado
+from django.core.paginator import Paginator # Ferramenta para dividir listas grandes em várias páginas, evitando sobrecarga de dados na tela
+from django.contrib import messages # Ferramenta para enviar mensagens de sucesso ou erro para o usuário, que aparecem na tela após uma ação
 
 # 1. PAINEL PRINCIPAL (Página home)
 @login_required(login_url='login')
@@ -39,8 +41,8 @@ def home(request):
             else:
                 erro = "Código inválido. Verifique com o dono da oficina e tente novamente."
 
-        # Busca as O.S que ninguém pegou ainda (PENDENTE)
-        fila_de_espera = Maintenance.objects.filter(status='PENDENTE').order_by('-criado_em')
+        # Busca as O.S que ninguém pegou ainda, especificamente DESTA oficina, ignorando a Fila de Espera
+        fila_de_espera = Maintenance.objects.filter(oficina=request.user.oficina_vinculada, status='PENDENTE').order_by('-criado_em')
         
         # Busca as O.S que ESTE mecânico assumiu
         meus_servicos = Maintenance.objects.filter(mecanico=request.user, status__in=['ACEITA', 'ANDAMENTO']).order_by('-criado_em')
@@ -87,8 +89,8 @@ def home(request):
         minhas_oficinas = Workshop.objects.filter(dono=request.user)
         
         # --- CONTAGEM DE KPIs ---
-        # 1. Filtra as manutenções usando as oficinas do dono
-        manutencoes_do_dono = Maintenance.objects.filter(oficina__in=minhas_oficinas).order_by('-criado_em')
+        # 1. Filtra as manutenções do dono, EXCLUINDO as que estão na Sala de Espera do Cliente
+        manutencoes_do_dono = Maintenance.objects.filter(oficina__in=minhas_oficinas).exclude(status='AGUARDANDO_VAGA').order_by('-criado_em')
         # 2. Conta os Pendentes (status PENDENTE)
         total_pendentes = manutencoes_do_dono.filter(status='PENDENTE').count()
         # 3. Conta os Em Andamento (incluindo ACEITA, AGUARDANDO_APROVACAO e ANDAMENTO)
@@ -121,6 +123,11 @@ def home(request):
         # Só mostra o popup se houver mensagens não lidas E se for a primeira vez que a página carrega sem nenhuma aba específica selecionada (sinal de que acabou de fazer login)
         mostrar_popup = (notificacoes_nao_lidas > 0)
 
+        # --- NOVA LÓGICA DE PAGINAÇÃO (DE 10 EM 10) ---
+        paginator = Paginator(manutencoes_do_dono, 5) # Corta as manutenções a cada 10 itens
+        numero_pagina = request.GET.get('page') # Vê o número da página no URL
+        solicitacoes_paginadas = paginator.get_page(numero_pagina)
+
         # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
             'oficinas': minhas_oficinas,
@@ -128,7 +135,7 @@ def home(request):
             'total_pendentes': total_pendentes, # Envia os Pendentes pro HTML
             'total_andamento': total_andamento, # Envia os Em Andamento pro HTML
             'total_concluidos': total_concluidos, # Envia os Concluídos pro HTML
-            'solicitacoes': manutencoes_do_dono, # Envia todas as solicitações de manutenção do dono para o HTML, para mostrar na aba de solicitações
+            'solicitacoes': solicitacoes_paginadas, # Envia todas as solicitações de manutenção do dono para o HTML, para mostrar na aba de solicitações
             'placa_buscada': placa_buscada, # Envia a placa digitada para o HTML, para mostrar na barra de busca
             'veiculo_encontrado': veiculo_encontrado, # Envia o veículo encontrado para a aba de busca de placa
             'busca_realizada': busca_realizada, # Indica se o dono realizou uma busca de placa ou não
@@ -137,6 +144,7 @@ def home(request):
             'notificacoes_nao_lidas': notificacoes_nao_lidas, # Envia a contagem de notificações não lidas para o HTML, para mostrar no ícone de sino
             'mostrar_popup': mostrar_popup, # Indica se o popup de notificações deve ser mostrado ou não
             'cancelamentos_pendentes': cancelamentos_pendentes, # Lista de cancelamentos pendentes
+            'paginator': paginator, # Envia o objeto de paginação para o HTML, para criar os links de navegação entre páginas
         }
         return render(request, 'owner_dashboard.html', contexto)
         
@@ -148,6 +156,9 @@ def home(request):
         # Busca o histórico de manutenções apenas dos VEÍCULOS desse cliente específico
         minhas_manutencoes = Maintenance.objects.filter(veiculo__proprietario=request.user).order_by('-criado_em')
 
+        # --- CORREÇÃO: Busca as oficinas para enviar para o HTML do cliente ---
+        oficinas_disponiveis = Workshop.objects.all().distinct()
+
         # Notificações - Ordenando das mais recentes para as mais antigas
         todas_notificacoes = Notification.objects.filter(usuario=request.user).order_by('-criado_em')
         notificacoes_nao_lidas = todas_notificacoes.filter(lida=False).count()
@@ -157,6 +168,7 @@ def home(request):
         contexto = {
             'carros_para_tela': meus_carros,
             'manutencoes_para_tela': minhas_manutencoes, # Envia a lista para o HTML, para mostrar na aba de histórico de manutenções
+            'oficinas_para_tela': oficinas_disponiveis, # NOVO: Envia as oficinas para o menu de seleção!
             'notificacoes': minhas_notificacoes,
             'notificacoes_nao_lidas': notificacoes_nao_lidas,
             'mostrar_popup': mostrar_popup
@@ -281,7 +293,44 @@ def request_maintenance(request):
         
         if form.is_valid():
             nova_manutencao = form.save(commit=False)
-            # O status já nasce como 'PENDENTE' (definido lá no models.py como default)
+            
+            # --- NOVA LÓGICA DE FILA DE ESPERA (MOTOR DE CAPACIDADE) ---
+            
+            # CORREÇÃO: Captura a oficina DIRETAMENTE do que o cliente selecionou no HTML
+            oficina_id = request.POST.get('oficina')
+            if oficina_id:
+                from .models import Workshop # Garante que o modelo Workshop está acessível
+                nova_manutencao.oficina = Workshop.objects.filter(id=oficina_id).first()
+                
+            # Verifica se o cliente escolheu uma oficina específica no formulário
+            oficina_escolhida = nova_manutencao.oficina
+            
+            if oficina_escolhida:
+                # Conta quantas Ordens de Serviço (O.S) ativas esta oficina já tem
+                os_ativas = Maintenance.objects.filter(
+                    oficina=oficina_escolhida,
+                    status__in=['PENDENTE', 'AGUARDANDO_APROVACAO', 'ACEITA', 'ANDAMENTO']
+                ).count()
+                
+                # Compara a quantidade de O.S ativas com o limite global da oficina
+                if os_ativas >= oficina_escolhida.limite_servicos_global:
+                    # Oficina lotada! Altera o status para a Sala de Espera em vez de rejeitar
+                    nova_manutencao.status = 'AGUARDANDO_VAGA'
+                    dias = oficina_escolhida.dias_espera_lotacao
+                    
+                    # Cria a mensagem de aviso (amarela) para o cliente ver no painel dele
+                    messages.warning(request, f'⚠️ A oficina {oficina_escolhida.nome} está com lotação máxima. O seu pedido foi salvo na fila de espera! Previsão para novas vagas: {dias} dias.')
+                else:
+                    # Oficina tem vaga. O status já nasce como 'PENDENTE' (definido lá no models.py como default)
+                    nova_manutencao.status = 'PENDENTE'
+                    # Cria a mensagem de sucesso (verde)
+                    messages.success(request, 'Solicitação enviada com sucesso para a oficina!')
+            else:
+                # Caso a O.S seja criada sem oficina atrelada por algum motivo
+                # O status já nasce como 'PENDENTE' (definido lá no models.py como default)
+                nova_manutencao.status = 'PENDENTE'
+                messages.success(request, 'Solicitação criada com sucesso!')
+            
             nova_manutencao.save()
             return redirect('home')
     else:
@@ -302,6 +351,18 @@ def atendimento_balcao(request):
             
         if not oficina_atual:
             return redirect('home') # Se por algum motivo não tiver oficina, aborta a missão
+
+        # --- VERIFICAÇÃO DE LOTAÇÃO (MOTOR DE CAPACIDADE) ---
+        # Conta as Ordens de Serviço ativas nesta oficina específica
+        os_ativas = Maintenance.objects.filter(
+            oficina=oficina_atual, 
+            status__in=['PENDENTE', 'AGUARDANDO_APROVACAO', 'ACEITA', 'ANDAMENTO']
+        ).count()
+        
+        # Se a oficina atingiu ou passou do limite global, exibe o erro e bloqueia a criação
+        if os_ativas >= oficina_atual.limite_servicos_global:
+            messages.error(request, f'⚠️ Lotação Atingida! A oficina já atingiu o limite máximo de {oficina_atual.limite_servicos_global} serviços em andamento.')
+            return redirect('home')
 
         # Coleta os dados do formulário HTML que forem preenchidos na oficina
         nome_cliente = request.POST.get('nome_cliente')
@@ -386,11 +447,56 @@ def nova_os_existente(request, veiculo_id):
         return redirect('/?tab=solicitacoes')
     return redirect('home')
 
+# AÇÕES DA SALA DE ESPERA DO CLIENTE
+@login_required
+def reenviar_os_cliente(request, id):
+    manutencao = get_object_or_404(Maintenance, id=id, veiculo__proprietario=request.user)
+    
+    if request.method == 'POST' and manutencao.status == 'AGUARDANDO_VAGA':
+        oficina = manutencao.oficina
+        if oficina:
+            os_ativas = Maintenance.objects.filter(
+                oficina=oficina, status__in=['PENDENTE', 'AGUARDANDO_APROVACAO', 'ACEITA', 'ANDAMENTO']
+            ).count()
+            
+            if os_ativas >= oficina.limite_servicos_global:
+                messages.warning(request, f'⚠️ A oficina {oficina.nome} continua lotada. Tente novamente mais tarde.')
+            else:
+                manutencao.status = 'PENDENTE'
+                manutencao.save()
+                messages.success(request, 'Vaga disponível! Solicitação enviada para a oficina com sucesso.')
+                
+    return redirect('home')
+
+@login_required
+def cancelar_os_cliente(request, id):
+    manutencao = get_object_or_404(Maintenance, id=id, veiculo__proprietario=request.user)
+    if request.method == 'POST' and manutencao.status == 'AGUARDANDO_VAGA':
+        manutencao.delete() # Apaga do banco para não sujar o histórico
+        messages.success(request, 'Solicitação cancelada com sucesso.')
+    return redirect('home')
+
 # MECÂNICO ACEITAR O SERVIÇO
 @login_required
 def accept_maintenance(request, id):
     if request.method == 'POST':
         manutencao = get_object_or_404(Maintenance, id=id)
+        
+        # --- VERIFICAÇÃO DO LIMITE DO MECÂNICO (MOTOR DE CAPACIDADE) ---
+        # Identifica a oficina da O.S ou a oficina do mecânico
+        oficina_atual = manutencao.oficina or getattr(request.user, 'oficina_vinculada', None)
+        
+        if oficina_atual:
+            # Conta quantas O.S o mecânico logado já tem em mãos
+            os_ativas_mecanico = Maintenance.objects.filter(
+                mecanico=request.user,
+                status__in=['ACEITA', 'AGUARDANDO_APROVACAO', 'ANDAMENTO']
+            ).count()
+            
+            # Se atingiu o limite que o Dono configurou, bloqueia e avisa
+            if os_ativas_mecanico >= oficina_atual.limite_por_mecanico:
+                messages.error(request, f'⚠️ Limite de Trabalho Atingido! Você não pode pegar mais de {oficina_atual.limite_por_mecanico} serviços simultâneos. Conclua algum para liberar espaço.')
+                return redirect('home')
         
         # 1. Atualiza os dados da manutenção
         manutencao.mecanico = request.user
@@ -678,3 +784,26 @@ def marcar_notificacoes_lidas(request):
         Notification.objects.filter(usuario=request.user, lida=False).update(lida=True)
         return JsonResponse({'status': 'sucesso'})
     return JsonResponse({'status': 'erro'}, status=400)
+
+# ==============================================================================
+# CONFIGURAÇÃO DE LIMITES DE O.S. POR OFICINA
+# ==============================================================================
+@login_required
+def configurar_limites_oficina(request, oficina_id):
+    if request.method == 'POST' and request.user.role == 'DONO':
+        # Procura a oficina garantindo que ela pertence ao dono logado
+        oficina = get_object_or_404(Workshop, id=oficina_id, dono=request.user)
+        
+        # Captura os novos valores digitados
+        novo_limite_global = request.POST.get('limite_global')
+        novo_limite_mecanico = request.POST.get('limite_mecanico')
+        novo_dias_espera = request.POST.get('dias_espera')
+        
+        if novo_limite_global and novo_limite_mecanico:
+            oficina.limite_servicos_global = int(novo_limite_global)
+            oficina.limite_por_mecanico = int(novo_limite_mecanico)
+            oficina.dias_espera_lotacao = int(novo_dias_espera)
+            oficina.save()
+            
+    # Volta para o painel mantendo a aba de oficinas aberta
+    return redirect('/?tab=oficinas')

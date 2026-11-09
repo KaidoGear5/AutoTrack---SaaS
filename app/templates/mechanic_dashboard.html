@@ -166,6 +166,11 @@
         .modal-content-nopadding { padding: 0; overflow: hidden; }
         .close-btn { color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; position: absolute; right: 20px; top: 20px;}
         .close-btn:hover { color: white; }
+
+        /* SISTEMA DE ALERTAS */
+        .alert-box { padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid transparent; }
+        .alert-error { background-color: rgba(231, 76, 60, 0.1); border-color: #e74c3c; color: #e74c3c; }
+        .alert-success { background-color: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
     </style>
 </head>
 <body>
@@ -198,6 +203,16 @@
     </div>
 
     <div class="container">
+        <!-- SISTEMA DE MENSAGENS DE ALERTA -->
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div class="alert-box {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                        <strong>{{ message }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         
         <div class="header-title">
             <h1>Painel de Serviços</h1>
