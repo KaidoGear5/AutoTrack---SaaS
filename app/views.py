@@ -121,6 +121,17 @@ def home(request):
 
         # ABA VEÍCULOS: Lista todos os veículos que tiveram manutenções em alguma das oficinas do dono
         meus_veiculos = Vehicle.objects.filter(manutencoes__oficina__in=minhas_oficinas).distinct()
+        
+        # --- (OFICINAS E VEÍCULOS) ---
+        # Paginação das Oficinas (ex: 5 por página)
+        paginator_oficinas = Paginator(minhas_oficinas, 5)
+        page_oficinas = request.GET.get('page_oficinas')
+        oficinas_paginadas = paginator_oficinas.get_page(page_oficinas)
+
+        # Paginação dos Veículos (ex: 10 por página, pois ocupam menos espaço)
+        paginator_veiculos = Paginator(meus_veiculos, 5)
+        page_veiculos = request.GET.get('page_veiculos')
+        veiculos_paginados = paginator_veiculos.get_page(page_veiculos)
 
         # Notificações - Ordenando das mais recentes para as mais antigas
         # 1. Primeiro pegamos TODAS as notificações
@@ -142,7 +153,7 @@ def home(request):
 
         # 'contexto' é o pacote de dados que enviamos do Python para o HTML
         contexto = {
-            'oficinas': minhas_oficinas,
+            'oficinas': oficinas_paginadas,
             'aba_ativa': request.GET.get('tab', 'oficinas'),
             'total_pendentes': total_pendentes, # Envia os Pendentes pro HTML
             'total_andamento': total_andamento, # Envia os Em Andamento pro HTML
@@ -151,7 +162,7 @@ def home(request):
             'placa_buscada': placa_buscada, # Envia a placa digitada para o HTML, para mostrar na barra de busca
             'veiculo_encontrado': veiculo_encontrado, # Envia o veículo encontrado para a aba de busca de placa
             'busca_realizada': busca_realizada, # Indica se o dono realizou uma busca de placa ou não
-            'veiculos': meus_veiculos, # Envia a lista de veículos para a aba de veículos
+            'veiculos': veiculos_paginados, # Envia a lista de veículos para a aba de veículos
             'notificacoes': minhas_notificacoes, # Envia a lista de notificações para a aba de notificações
             'notificacoes_nao_lidas': notificacoes_nao_lidas, # Envia a contagem de notificações não lidas para o HTML, para mostrar no ícone de sino
             'mostrar_popup': mostrar_popup, # Indica se o popup de notificações deve ser mostrado ou não

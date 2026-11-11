@@ -318,7 +318,7 @@
                             <strong style="color: #f39c12;">Diagnóstico do Mecânico:</strong>
                             <p style="font-size: 14px; color: #a9b1bd;">{{ manutencao.diagnostico_vistoria|linebreaksbr }}</p>
                             
-                            <!-- DIV PARA AS IMAGENS DINÂMICAS -->
+                            <!-- DIV PARA AS IMAGENS -->
                             {% if manutencao.imagens_evidencia %}
                                 <div class="galeria-evidencias" data-links="{{ manutencao.imagens_evidencia }}"></div>
                             {% endif %}
@@ -421,7 +421,7 @@
             </div>
         {% endif %}
 
-        <!-- BLOCO DE PAGINAÇÃO DO CLIENTE (COLE AQUI!) -->
+        <!-- BLOCO DE PAGINAÇÃO DO CLIENTE -->
         {% if manutencoes_para_tela.has_other_pages %}
         <div class="pagination">
             {% if manutencoes_para_tela.has_previous %}
@@ -501,7 +501,7 @@
                     </select>
                 </div>
                 
-                <!-- NOVO CAMPO: SELEÇÃO DE OFICINA -->
+                <!-- SELEÇÃO DE OFICINA -->
                 <div class="form-group">
                     <label>Para qual oficina deseja enviar? *</label>
                     <select name="oficina" class="form-control" required>

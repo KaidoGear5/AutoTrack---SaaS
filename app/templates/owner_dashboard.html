@@ -411,6 +411,31 @@
                     <p>Você ainda não possui nenhuma oficina cadastrada.</p>
                 </div>
             {% endfor %}
+
+            <!-- PAGINAÇÃO DA ABA OFICINAS -->
+            {% if oficinas.has_other_pages %}
+            <div class="pagination">
+                {% if oficinas.has_previous %}
+                <!-- O tab=solicitacoes garante que a aba continue aberta ao trocar de página -->
+                    <a href="?tab=oficinas&page_oficinas=1" class="page-link">&laquo; Primeira</a>
+                    <a href="?tab=oficinas&page_oficinas={{ oficinas.previous_page_number }}" class="page-link">Anterior</a>
+                {% else %}
+                    <span class="page-disabled">&laquo; Primeira</span>
+                    <span class="page-disabled">Anterior</span>
+                {% endif %}
+
+                <span class="page-active">Página {{ oficinas.number }} de {{ oficinas.paginator.num_pages }}</span>
+
+                {% if oficinas.has_next %}
+                    <a href="?tab=oficinas&page_oficinas={{ oficinas.next_page_number }}" class="page-link">Próxima</a>
+                    <a href="?tab=oficinas&page_oficinas={{ oficinas.paginator.num_pages }}" class="page-link">Última &raquo;</a>
+                {% else %}
+                    <span class="page-disabled">Próxima</span>
+                    <span class="page-disabled">Última &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
         {% endif %}
 
         <!-- CONTEÚDO DA ABA SOLICITAÇÕES -->
@@ -484,11 +509,10 @@
                 </div>
             {% endfor %}
 
-            <!-- BLACO DE PAGINAÇÃO (NOVO) -->
+            <!-- BLOCO DE PAGINAÇÃO -->
             {% if solicitacoes.has_other_pages %}
             <div class="pagination">
                 {% if solicitacoes.has_previous %}
-                    <!-- O tab=solicitacoes garante que a aba continue aberta ao trocar de página -->
                     <a href="?tab=solicitacoes&page=1" class="page-link">&laquo; Primeira</a>
                     <a href="?tab=solicitacoes&page={{ solicitacoes.previous_page_number }}" class="page-link">Anterior</a>
                 {% else %}
@@ -591,6 +615,30 @@
                     <p>Nenhum veículo registado no histórico da sua oficina ainda.</p>
                 </div>
             {% endfor %}
+
+            <!-- PAGINAÇÃO DA ABA VEÍCULOS -->
+            {% if veculos.has_other_pages %}
+            <div class="pagination">
+                {% if veiculos.has_previous %}
+                    <a href="?tab=veiculos&page_veiculos=1" class="page-link">&laquo; Primeira</a>
+                    <a href="?tab=veiculos&page_veiculoss={{ veiculos.previous_page_number }}" class="page-link">Anterior</a>
+                {% else %}
+                    <span class="page-disabled">&laquo; Primeira</span>
+                    <span class="page-disabled">Anterior</span>
+                {% endif %}
+
+                <span class="page-active">Página {{ veiculos.number }} de {{ veiculos.paginator.num_pages }}</span>
+
+                {% if veiculos.has_next %}
+                    <a href="?tab=veiculos&page_veiculos={{ veiculos.next_page_number }}" class="page-link">Próxima</a>
+                    <a href="?tab=veiculos&page_veiculos={{ veiculos.paginator.num_pages }}" class="page-link">Última &raquo;</a>
+                {% else %}
+                    <span class="page-disabled">Próxima</span>
+                    <span class="page-disabled">Última &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
         {% endif %}
 
     </div>

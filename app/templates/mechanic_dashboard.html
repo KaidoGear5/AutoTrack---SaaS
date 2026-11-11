@@ -293,7 +293,7 @@
                 </div>
             {% endif %}
 
-            <!-- PAGINAÇÃO DA FILA DE ESPERA (COLE AQUI!) -->
+            <!-- PAGINAÇÃO DA FILA DE ESPERA -->
             {% if solicitacoes.has_other_pages %}
             <div class="pagination">
                 {% if solicitacoes.has_previous %}
@@ -345,7 +345,7 @@
                                         <button type="submit" class="btn btn-green" style="width: 100%; padding: 8px; font-size: 13px;">Aceitar</button>
                                     </form>
                                     
-                                    <!-- Novo botão: Devolve para a fila geral para outro mecânico pegar -->
+                                    <!-- Devolve para a fila geral para outro mecânico pegar -->
                                     <form action="{% url 'devolver_a_fila' cancelamento.id %}" method="POST" style="flex: 1;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-orange" style="width: 100%; padding: 8px; font-size: 13px;">Devolver à Fila</button>
@@ -416,7 +416,7 @@
             </div>
             {% endif %}
 
-        {% endif %} <!-- FIM DO BLOCO IF DA OFICINA -->
+        {% endif %}
     </div>
 
     <!-- ========================================== -->
@@ -481,7 +481,7 @@
         </div>
     </div>
 
-    <!-- Modal Solicitar Cancelamento de O.S. (NOVO) -->
+    <!-- Modal Solicitar Cancelamento de O.S. -->
     <div id="modalCancelar" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="fecharModal('modalCancelar')">&times;</span>
@@ -599,7 +599,7 @@
         function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
         function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // Preparar Modal de Solicitar Cancelamento (NOVO)
+        // Preparar Modal de Solicitar Cancelamento
         function prepararModalCancelar(id, veiculoNome) {
             document.getElementById('cancelarVeiculo').innerText = veiculoNome;
             let baseUrl = "{% url 'solicitar_cancelamento' 999999 %}".replace('999999', id);

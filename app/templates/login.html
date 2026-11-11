@@ -47,9 +47,42 @@
 
         /* Mensagens de Erro */
         .error-message { color: #e74c3c; font-size: 14px; font-weight: bold; margin-bottom: 15px; display: block; }
+
+        /* === TEMA CLARO === */
+        /* Caixas principais e cards */
+        body.light-theme form, body.light-theme .container, body.light-theme .card, body.light-theme div[style*="background-color: #222630"] {
+            background-color: #ffffff !important; 
+            border: 1px solid #e5e7eb !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        /* Textos e Títulos */
+        body.light-theme h1, body.light-theme h3, body.light-theme h4, body.light-theme strong { color: #1f2937 !important; }
+        body.light-theme p, body.light-theme span { color: #4b5563 !important; }
+        
+        /* Inputs e Formulários */
+        body.light-theme input, body.light-theme select { 
+            color: #1f2937 !important; 
+            background-color: #f9fafb !important; 
+            border: 1px solid #d1d5db !important; 
+        }
+        body.light-theme input:focus, body.light-theme select:focus { border-color: #f39c12 !important; }
+        
+        /* Caixas de Seleção de Tipo de Conta*/
+        body.light-theme .tipo-conta, body.light-theme div[style*="border: 1px solid #2d3340"] {
+            background-color: #f9fafb !important;
+            border-color: #d1d5db !important;
+        }
+        body.light-theme div[style*="border-color: #f39c12"], body.light-theme div[style*="border: 1px solid #f39c12"] {
+            background-color: #fff9f0 !important;
+            border-color: #f39c12 !important;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Botão de Alternar Tema -->
+    <button id="theme-toggle-btn" onclick="toggleTheme()" style="position: absolute; top: 20px; right: 30px; background: none; border: none; font-size: 24px; cursor: pointer; z-index: 1000;">🌙</button>
 
     <div class="login-container">
         <div class="login-card">
@@ -91,10 +124,30 @@
         // Carrega automaticamente o tema que o utilizador escolheu nos painéis
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('trackmotor_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
             if (savedTheme === 'light') {
                 document.body.classList.add('light-theme');
+                if(themeBtn) themeBtn.innerText = '☀️';
             }
         });
+
+        // Função para alternar e salvar o tema no navegador
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            body.classList.toggle('light-theme');
+            
+            // Salva a escolha no navegador
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('trackmotor_theme', 'light');
+                themeBtn.innerText = '☀️';
+            } else {
+                localStorage.setItem('trackmotor_theme', 'dark');
+                themeBtn.innerText = '🌙';
+            }
+        }
     </script>
 </body>
 </html>
