@@ -41,4 +41,9 @@ urlpatterns = [
     path('marcar-notificacoes-lidas/', views.marcar_notificacoes_lidas, name='marcar_notificacoes_lidas'),
     # Rota para alterar a senha do usuário
     path('perfil/atualizar/', views.atualizar_perfil, name='atualizar_perfil'),
+    # Rota para Limitar o número de ordens de serviço que uma oficina pode ter em andamento
+    path('oficina/limites/<int:oficina_id>/', views.configurar_limites_oficina, name='configurar_limites_oficina'),
+    # Rota para o cliente reenviar ou cancelar uma ordem de serviço
+    path('cliente/reenviar-os/<int:id>/', views.reenviar_os_cliente, name='reenviar_os_cliente'),
+    path('cliente/cancelar-os/<int:id>/', views.cancelar_os_cliente, name='cancelar_os_cliente'),
 ]

@@ -166,6 +166,22 @@
         .modal-content-nopadding { padding: 0; overflow: hidden; }
         .close-btn { color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; position: absolute; right: 20px; top: 20px;}
         .close-btn:hover { color: white; }
+
+        /* SISTEMA DE ALERTAS */
+        .alert-box { padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid transparent; }
+        .alert-error { background-color: rgba(231, 76, 60, 0.1); border-color: #e74c3c; color: #e74c3c; }
+        .alert-success { background-color: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
+
+        /* CSS DA PAGINAÇÃO */
+        .pagination { display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 10px; padding-bottom: 20px;}
+        .page-link { background-color: #2d3340; color: #a9b1bd; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.3s; font-size: 13px; }
+        .page-link:hover { background-color: #f39c12; color: white; }
+        .page-active { background-color: #f39c12; color: white; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .page-disabled { background-color: #222630; color: #6b7280; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: not-allowed; border: 1px solid #2d3340; font-size: 13px; }
+        
+        body.light-theme .page-link { background-color: #f3f4f6; color: #4b5563; }
+        body.light-theme .page-link:hover { background-color: #f39c12; color: white; }
+        body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
     </style>
 </head>
 <body>
@@ -198,6 +214,16 @@
     </div>
 
     <div class="container">
+        <!-- SISTEMA DE MENSAGENS DE ALERTA -->
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div class="alert-box {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                        <strong>{{ message }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         
         <div class="header-title">
             <h1>Painel de Serviços</h1>
@@ -267,6 +293,29 @@
                 </div>
             {% endif %}
 
+            <!-- PAGINAÇÃO DA FILA DE ESPERA -->
+            {% if solicitacoes.has_other_pages %}
+            <div class="pagination">
+                {% if solicitacoes.has_previous %}
+                    <a href="?page_fila=1&page_servicos={{ meus_servicos.number }}" class="page-link">&laquo; Primeira</a>
+                    <a href="?page_fila={{ solicitacoes.previous_page_number }}&page_servicos={{ meus_servicos.number }}" class="page-link">Anterior</a>
+                {% else %}
+                    <span class="page-disabled">&laquo; Primeira</span>
+                    <span class="page-disabled">Anterior</span>
+                {% endif %}
+
+                <span class="page-active">Página {{ solicitacoes.number }} de {{ solicitacoes.paginator.num_pages }}</span>
+
+                {% if solicitacoes.has_next %}
+                    <a href="?page_fila={{ solicitacoes.next_page_number }}&page_servicos={{ meus_servicos.number }}" class="page-link">Próxima</a>
+                    <a href="?page_fila={{ solicitacoes.paginator.num_pages }}&page_servicos={{ meus_servicos.number }}" class="page-link">Última &raquo;</a>
+                {% else %}
+                    <span class="page-disabled">Próxima</span>
+                    <span class="page-disabled">Última &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <!-- MEUS CANCELAMENTOS (SÓ APARECE SE EXISTIR ALGUM) -->
             {% if meus_cancelamentos %}
                 <h3 class="section-title cancelamentos">Minhas Solicitações de Cancelamento</h3>
@@ -296,7 +345,7 @@
                                         <button type="submit" class="btn btn-green" style="width: 100%; padding: 8px; font-size: 13px;">Aceitar</button>
                                     </form>
                                     
-                                    <!-- Novo botão: Devolve para a fila geral para outro mecânico pegar -->
+                                    <!-- Devolve para a fila geral para outro mecânico pegar -->
                                     <form action="{% url 'devolver_a_fila' cancelamento.id %}" method="POST" style="flex: 1;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-orange" style="width: 100%; padding: 8px; font-size: 13px;">Devolver à Fila</button>
@@ -344,7 +393,30 @@
                 </div>
             {% endif %}
 
-        {% endif %} <!-- FIM DO BLOCO IF DA OFICINA -->
+            <!-- PAGINAÇÃO DOS SERVIÇOS EM ANDAMENTO -->
+            {% if meus_servicos.has_other_pages %}
+            <div class="pagination">
+                {% if meus_servicos.has_previous %}
+                    <a href="?page_servicos=1&page_fila={{ solicitacoes.number }}" class="page-link">&laquo; Primeira</a>
+                    <a href="?page_servicos={{ meus_servicos.previous_page_number }}&page_fila={{ solicitacoes.number }}" class="page-link">Anterior</a>
+                {% else %}
+                    <span class="page-disabled">&laquo; Primeira</span>
+                    <span class="page-disabled">Anterior</span>
+                {% endif %}
+
+                <span class="page-active">Página {{ meus_servicos.number }} de {{ meus_servicos.paginator.num_pages }}</span>
+
+                {% if meus_servicos.has_next %}
+                    <a href="?page_servicos={{ meus_servicos.next_page_number }}&page_fila={{ solicitacoes.number }}" class="page-link">Próxima</a>
+                    <a href="?page_servicos={{ meus_servicos.paginator.num_pages }}&page_fila={{ solicitacoes.number }}" class="page-link">Última &raquo;</a>
+                {% else %}
+                    <span class="page-disabled">Próxima</span>
+                    <span class="page-disabled">Última &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        {% endif %}
     </div>
 
     <!-- ========================================== -->
@@ -409,7 +481,7 @@
         </div>
     </div>
 
-    <!-- Modal Solicitar Cancelamento de O.S. (NOVO) -->
+    <!-- Modal Solicitar Cancelamento de O.S. -->
     <div id="modalCancelar" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="fecharModal('modalCancelar')">&times;</span>
@@ -527,7 +599,7 @@
         function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
         function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // Preparar Modal de Solicitar Cancelamento (NOVO)
+        // Preparar Modal de Solicitar Cancelamento
         function prepararModalCancelar(id, veiculoNome) {
             document.getElementById('cancelarVeiculo').innerText = veiculoNome;
             let baseUrl = "{% url 'solicitar_cancelamento' 999999 %}".replace('999999', id);

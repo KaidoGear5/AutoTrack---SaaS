@@ -80,6 +80,19 @@
         body.light-theme .notification-item small {
         color: #6b7280 !important;
         }
+
+        /* SISTEMA DE ALERTAS */
+        .alert-box { padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid transparent; }
+        .alert-error { background-color: rgba(231, 76, 60, 0.1); border-color: #e74c3c; color: #e74c3c; }
+        .alert-success { background-color: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
+        .alert-warning { background-color: rgba(243, 156, 18, 0.1); border-color: #f39c12; color: #f39c12; }
+        
+        /* COR ESPECIAL PARA O STATUS 'AGUARDANDO VAGA' */
+        .status-aguardando-vaga { 
+            background-color: rgba(231, 76, 60, 0.1) !important; 
+            color: #e74c3c !important; 
+            border: 1px solid #e74c3c !important; 
+        }
         
         /* Navbar Superior */
         .navbar { background-color: #222630; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3340; }
@@ -166,6 +179,17 @@
         .modal-content { background-color: #222630; border-radius: 12px; width: 450px; max-width: 90%; border: 1px solid #2d3340; position: relative; padding: 30px; text-align: left;}
         .close-btn { color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; position: absolute; right: 20px; top: 20px;}
         .close-btn:hover { color: white; }
+
+        /* CSS DA PAGINAÇÃO */
+        .pagination { display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 10px; padding-bottom: 20px;}
+        .page-link { background-color: #2d3340; color: #a9b1bd; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.3s; font-size: 13px; }
+        .page-link:hover { background-color: #f39c12; color: white; }
+        .page-active { background-color: #f39c12; color: white; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .page-disabled { background-color: #222630; color: #6b7280; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: not-allowed; border: 1px solid #2d3340; font-size: 13px; }
+        
+        body.light-theme .page-link { background-color: #f3f4f6; color: #4b5563; }
+        body.light-theme .page-link:hover { background-color: #f39c12; color: white; }
+        body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
     </style>
 </head>
 <body>
@@ -198,6 +222,16 @@
     </div>
 
     <div class="container">
+        <!-- SISTEMA DE MENSAGENS DE ALERTA -->
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div class="alert-box {% if message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
+                        <strong>{{ message }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         
         <!-- Ações Principais (Agora abrem Modais) -->
         <div style="display: flex; gap: 15px; margin-bottom: 40px;">
@@ -245,7 +279,9 @@
                             <p><strong>Data da Solicitação:</strong> {{ manutencao.criado_em|date:"d/m/Y" }} às {{ manutencao.criado_em|date:"H:i" }}</p>
                         </div>
                         <div class="history-info" style="text-align: right;">
-                            <span class="badge-status">{{ manutencao.get_status_display }}</span>
+                            <span class="badge-status {% if manutencao.status == 'AGUARDANDO_VAGA' %}status-aguardando-vaga{% endif %}">
+                            {{ manutencao.get_status_display }}
+                            </span>
                             <p style="margin-top: 15px;"><strong>Mecânico Responsável:</strong> {{ manutencao.mecanico.first_name|default:"Aguardando" }}</p>
                             {% if manutencao.data_aceite %}
                                 <p><strong>Aceite em:</strong> {{ manutencao.data_aceite|date:"d/m/Y H:i" }}</p>
@@ -257,13 +293,32 @@
                         <p style="margin: 0; font-size: 14px;"><strong>Problema Relatado:</strong> {{ manutencao.descricao_problema }}</p>
                     </div>
 
+                    <!-- FILA DE ESPERA (OPÇÕES DO CLIENTE) -->
+                    {% if manutencao.status == 'AGUARDANDO_VAGA' %}
+                        <div class="diag-box" style="border-left: 4px solid #e74c3c;">
+                            <strong style="color: #e74c3c;">⚠️ Sua O.S está na Fila de Espera</strong>
+                            <p style="font-size: 14px; color: #a9b1bd; margin-bottom: 0;">A oficina selecionada estava lotada. Você pode aguardar abrir uma vaga e tentar reenviar para verificação, ou cancelar esta solicitação.</p>
+                            
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <form action="{% url 'reenviar_os_cliente' manutencao.id %}" method="POST" style="flex: 1;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-orange" style="width: 100%;">🔄 Tentar Enviar Novamente</button>
+                                </form>
+                                <form action="{% url 'cancelar_os_cliente' manutencao.id %}" method="POST" style="flex: 1;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-red" style="width: 100%;">X Cancelar Solicitação</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <!-- VISTORIA (AGUARDANDO APROVAÇÃO) -->
                     {% if manutencao.status == 'AGUARDANDO_APROVACAO' %}
                         <div class="diag-box aprovacao">
                             <strong style="color: #f39c12;">Diagnóstico do Mecânico:</strong>
                             <p style="font-size: 14px; color: #a9b1bd;">{{ manutencao.diagnostico_vistoria|linebreaksbr }}</p>
                             
-                            <!-- DIV PARA AS IMAGENS DINÂMICAS -->
+                            <!-- DIV PARA AS IMAGENS -->
                             {% if manutencao.imagens_evidencia %}
                                 <div class="galeria-evidencias" data-links="{{ manutencao.imagens_evidencia }}"></div>
                             {% endif %}
@@ -366,6 +421,29 @@
             </div>
         {% endif %}
 
+        <!-- BLOCO DE PAGINAÇÃO DO CLIENTE -->
+        {% if manutencoes_para_tela.has_other_pages %}
+        <div class="pagination">
+            {% if manutencoes_para_tela.has_previous %}
+                <a href="?page=1" class="page-link">&laquo; Primeira</a>
+                <a href="?page={{ manutencoes_para_tela.previous_page_number }}" class="page-link">Anterior</a>
+            {% else %}
+                <span class="page-disabled">&laquo; Primeira</span>
+                <span class="page-disabled">Anterior</span>
+            {% endif %}
+
+            <span class="page-active">Página {{ manutencoes_para_tela.number }} de {{ manutencoes_para_tela.paginator.num_pages }}</span>
+
+            {% if manutencoes_para_tela.has_next %}
+                <a href="?page={{ manutencoes_para_tela.next_page_number }}" class="page-link">Próxima</a>
+                <a href="?page={{ manutencoes_para_tela.paginator.num_pages }}" class="page-link">Última &raquo;</a>
+            {% else %}
+                <span class="page-disabled">Próxima</span>
+                <span class="page-disabled">Última &raquo;</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
     </div>
 
     <!-- ========================================== -->
@@ -419,6 +497,17 @@
                         <option value="" disabled selected>Selecione um veículo da sua garagem...</option>
                         {% for carro in carros_para_tela %}
                             <option value="{{ carro.id }}">{{ carro.marca }} {{ carro.modelo }} ({{ carro.placa }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- SELEÇÃO DE OFICINA -->
+                <div class="form-group">
+                    <label>Para qual oficina deseja enviar? *</label>
+                    <select name="oficina" class="form-control" required>
+                        <option value="" disabled selected>Selecione a oficina mecânica...</option>
+                        {% for ofc in oficinas_para_tela %}
+                            <option value="{{ ofc.id }}">{{ ofc.nome }}</option>
                         {% endfor %}
                     </select>
                 </div>

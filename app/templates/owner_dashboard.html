@@ -178,6 +178,18 @@
         .status-CANCELAMENTO_SOLICITADO, .status-CANCELAMENTO_REJEITADO { background-color: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; }
         .status-CANCELADO { background-color: rgba(107, 114, 128, 0.1); color: #6b7280; border: 1px solid #6b7280; }
 
+        /* CSS DA PAGINAÇÃO */
+        .pagination { display: flex; justify-content: center; align-items: center; margin-top: 30px; gap: 10px; padding-bottom: 20px;}
+        .page-link { background-color: #2d3340; color: #a9b1bd; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.3s; font-size: 13px; }
+        .page-link:hover { background-color: #ff7b00; color: white; }
+        .page-active { background-color: #ff7b00; color: white; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .page-disabled { background-color: #222630; color: #6b7280; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: not-allowed; border: 1px solid #2d3340; font-size: 13px; }
+        
+        /* Ajuste pro Tema Claro */
+        body.light-theme .page-link { background-color: #f3f4f6; color: #4b5563; }
+        body.light-theme .page-link:hover { background-color: #ff7b00; color: white; }
+        body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
+
         /* SIDEBAR DE NOTIFICAÇÕES (Barra Lateral) */
         .notification-sidebar { position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; background-color: #222630; border-left: 1px solid #2d3340; box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: right 0.3s ease; z-index: 2000; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .notification-sidebar.open { right: 0; }
@@ -201,6 +213,11 @@
         .modal-content-nopadding { padding: 0; overflow: hidden; }
         .close-btn { color: #a9b1bd; cursor: pointer; font-size: 24px; line-height: 1; position: absolute; right: 20px; top: 20px;}
         .close-btn:hover { color: white; }
+
+        /* SISTEMA DE ALERTAS */
+        .alert-box { padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid transparent; }
+        .alert-error { background-color: rgba(231, 76, 60, 0.1); border-color: #e74c3c; color: #e74c3c; }
+        .alert-success { background-color: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
     </style>
 </head>
 <body>
@@ -234,6 +251,16 @@
     </div>
 
     <div class="container">
+        <!-- SISTEMA DE MENSAGENS DE ALERTA -->
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div class="alert-box {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                        <strong>{{ message }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         <!-- Cards de KPI -->
         <div class="kpi-row">
             <div class="kpi-card kpi-pendente">
@@ -252,6 +279,17 @@
                 <div class="kpi-icon">✓</div>
             </div>
         </div>
+
+        <!-- INDICADOR DE FILA DE ESPERA EXTERNA -->
+        {% if total_espera_externa > 0 %}
+            <div style="background-color: rgba(231, 76, 60, 0.1); border: 1px solid #e74c3c; border-radius: 8px; padding: 15px 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="margin: 0; color: #e74c3c; font-size: 16px;">Fila de Espera Externa: {{ total_espera_externa }} Cliente(s)</h4>
+                    <p style="margin: 5px 0 0 0; color: #a9b1bd; font-size: 13px;">Estas O.S. estão retidas devido ao limite da sua oficina. Os clientes aguardam uma vaga para reenviar os pedidos.</p>
+                </div>
+                <button onclick="abrirModal('modalFilaExterna')" class="btn btn-outline-red" style="padding: 8px 15px; font-size: 13px; background-color: transparent; border: 1px solid #e74c3c; color: #e74c3c; cursor: pointer; border-radius: 6px;">Ver Lista Completa</button>
+            </div>
+        {% endif %}
 
         <!-- Botões de Ação Rápida -->
         <div class="action-bar-right">
@@ -290,14 +328,23 @@
                         <strong>{{ oficina.codigo_convite }}</strong>
                     </div>
                     
-                    <!-- CONTAGEM DE MECÂNICOS E BOTÃO -->
-                    <div style="margin-top: 15px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
-                        {% if oficina.mecanicos_equipe.count > 0 %}
-                            <span style="color: #10b981;">👥 {{ oficina.mecanicos_equipe.count }} mecânico(s) vinculado(s)</span>
-                            <button onclick="abrirModal('modalEquipe-{{ oficina.id }}')" style="background: none; border: none; color: #ff7b00; cursor: pointer; text-decoration: underline; font-weight: bold;">Ver Equipe</button>
-                        {% else %}
-                            <span>Nenhum mecânico vinculado ainda.</span>
-                        {% endif %}
+                    <!-- CONTAGEM DE MECÂNICOS E LIMITES -->
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div style="font-size: 13px;">
+                            {% if oficina.mecanicos_equipe.count > 0 %}
+                                <div style="color: #10b981; margin-bottom: 5px;">👥 {{ oficina.mecanicos_equipe.count }} mecânico(s) vinculado(s) <button onclick="abrirModal('modalEquipe-{{ oficina.id }}')" style="background: none; border: none; color: #ff7b00; cursor: pointer; text-decoration: underline; font-weight: bold; padding: 0; margin-left: 5px;">Ver Equipe</button></div>
+                            {% else %}
+                                <div style="margin-bottom: 5px; color: #a9b1bd;">Nenhum mecânico vinculado ainda.</div>
+                            {% endif %}
+                            
+                            <!-- Exibição dos limites atuais -->
+                            <div style="color: #3498db; font-weight: bold;">
+                                📊 Capacidade: {{ oficina.limite_servicos_global }} O.S globais | {{ oficina.limite_por_mecanico }} por mecânico
+                            </div>
+                        </div>
+                        
+                        <!-- Botão para abrir o modal de limites -->
+                        <button onclick="abrirModal('modalLimites-{{ oficina.id }}')" class="btn btn-blue" style="padding: 6px 12px; font-size: 12px;">Configurar Limites</button>
                     </div>
                 </div>
 
@@ -327,11 +374,68 @@
                     </div>
                 </div>
 
+                <!-- POP-UP PARA CONFIGURAR OS LIMITES DA OFICINA -->
+                <div id="modalLimites-{{ oficina.id }}" class="modal">
+                    <div class="modal-content">
+                        <span class="close-btn" onclick="fecharModal('modalLimites-{{ oficina.id }}')">&times;</span>
+                        <h3 style="color: white; margin-top: 0; font-size: 20px;">Limites: {{ oficina.nome }}</h3>
+                        <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Defina a capacidade máxima de atendimento simultâneo desta oficina para evitar sobrecarga.</p>
+                        
+                        <form method="POST" action="{% url 'configurar_limites_oficina' oficina.id %}">
+                            {% csrf_token %}
+                            <div class="form-row">
+                                <div class="form-group form-col">
+                                    <label>Limite Global de O.S *</label>
+                                    <input type="number" name="limite_global" class="form-control" value="{{ oficina.limite_servicos_global }}" min="1" required>
+                                </div>
+                                <div class="form-group form-col">
+                                    <label>Limite por Mecânico *</label>
+                                    <input type="number" name="limite_mecanico" class="form-control" value="{{ oficina.limite_por_mecanico }}" min="1" required>
+                                </div>
+                            </div>
+                            
+                            <!-- NOVO CAMPO: PREVISÃO DE ESPERA -->
+                            <div class="form-group" style="margin-top: 10px;">
+                                <label>Previsão de Vagas (Dias) *</label>
+                                <input type="number" name="dias_espera" class="form-control" value="{{ oficina.dias_espera_lotacao }}" min="1" required>
+                                <small style="color: #a9b1bd; font-size: 11px;">Tempo médio para a fila andar quando a oficina estiver 100% lotada.</small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 15px;">Guardar Configurações</button>
+                        </form>
+                    </div>
+                </div>
+
             {% empty %}
                 <div style="text-align: center; padding: 50px 0; color: #a9b1bd;">
                     <p>Você ainda não possui nenhuma oficina cadastrada.</p>
                 </div>
             {% endfor %}
+
+            <!-- PAGINAÇÃO DA ABA OFICINAS -->
+            {% if oficinas.has_other_pages %}
+            <div class="pagination">
+                {% if oficinas.has_previous %}
+                <!-- O tab=solicitacoes garante que a aba continue aberta ao trocar de página -->
+                    <a href="?tab=oficinas&page_oficinas=1" class="page-link">&laquo; Primeira</a>
+                    <a href="?tab=oficinas&page_oficinas={{ oficinas.previous_page_number }}" class="page-link">Anterior</a>
+                {% else %}
+                    <span class="page-disabled">&laquo; Primeira</span>
+                    <span class="page-disabled">Anterior</span>
+                {% endif %}
+
+                <span class="page-active">Página {{ oficinas.number }} de {{ oficinas.paginator.num_pages }}</span>
+
+                {% if oficinas.has_next %}
+                    <a href="?tab=oficinas&page_oficinas={{ oficinas.next_page_number }}" class="page-link">Próxima</a>
+                    <a href="?tab=oficinas&page_oficinas={{ oficinas.paginator.num_pages }}" class="page-link">Última &raquo;</a>
+                {% else %}
+                    <span class="page-disabled">Próxima</span>
+                    <span class="page-disabled">Última &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
         {% endif %}
 
         <!-- CONTEÚDO DA ABA SOLICITAÇÕES -->
@@ -404,6 +508,29 @@
                     <p>Nenhuma solicitação encontrada no momento.</p>
                 </div>
             {% endfor %}
+
+            <!-- BLOCO DE PAGINAÇÃO -->
+            {% if solicitacoes.has_other_pages %}
+            <div class="pagination">
+                {% if solicitacoes.has_previous %}
+                    <a href="?tab=solicitacoes&page=1" class="page-link">&laquo; Primeira</a>
+                    <a href="?tab=solicitacoes&page={{ solicitacoes.previous_page_number }}" class="page-link">Anterior</a>
+                {% else %}
+                    <span class="page-disabled">&laquo; Primeira</span>
+                    <span class="page-disabled">Anterior</span>
+                {% endif %}
+
+                <span class="page-active">Página {{ solicitacoes.number }} de {{ solicitacoes.paginator.num_pages }}</span>
+
+                {% if solicitacoes.has_next %}
+                    <a href="?tab=solicitacoes&page={{ solicitacoes.next_page_number }}" class="page-link">Próxima</a>
+                    <a href="?tab=solicitacoes&page={{ solicitacoes.paginator.num_pages }}" class="page-link">Última &raquo;</a>
+                {% else %}
+                    <span class="page-disabled">Próxima</span>
+                    <span class="page-disabled">Última &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
         {% endif %}
 
         <!-- CONTEÚDO DA ABA BUSCAR PLACA -->
@@ -488,6 +615,30 @@
                     <p>Nenhum veículo registado no histórico da sua oficina ainda.</p>
                 </div>
             {% endfor %}
+
+            <!-- PAGINAÇÃO DA ABA VEÍCULOS -->
+            {% if veculos.has_other_pages %}
+            <div class="pagination">
+                {% if veiculos.has_previous %}
+                    <a href="?tab=veiculos&page_veiculos=1" class="page-link">&laquo; Primeira</a>
+                    <a href="?tab=veiculos&page_veiculoss={{ veiculos.previous_page_number }}" class="page-link">Anterior</a>
+                {% else %}
+                    <span class="page-disabled">&laquo; Primeira</span>
+                    <span class="page-disabled">Anterior</span>
+                {% endif %}
+
+                <span class="page-active">Página {{ veiculos.number }} de {{ veiculos.paginator.num_pages }}</span>
+
+                {% if veiculos.has_next %}
+                    <a href="?tab=veiculos&page_veiculos={{ veiculos.next_page_number }}" class="page-link">Próxima</a>
+                    <a href="?tab=veiculos&page_veiculos={{ veiculos.paginator.num_pages }}" class="page-link">Última &raquo;</a>
+                {% else %}
+                    <span class="page-disabled">Próxima</span>
+                    <span class="page-disabled">Última &raquo;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
         {% endif %}
 
     </div>
@@ -692,6 +843,33 @@
             </div>
         </div>
     {% endif %}
+
+    <!-- Modal Fila de Espera Externa -->
+    <div id="modalFilaExterna" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalFilaExterna')">&times;</span>
+            <h3 style="color: #e74c3c; margin-top: 0; font-size: 20px;">Fila de Espera Externa</h3>
+            <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Clientes com O.S. aberta aguardando uma vaga em sua oficina.</p>
+            
+            <div style="max-height: 350px; overflow-y: auto;">
+                {% for espera in fila_espera_externa %}
+                    <div style="background-color: #1a1d24; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #2d3340; border-left: 4px solid #e74c3c;">
+                        <h4 style="margin: 0 0 5px 0; color: white; font-size: 15px;">{{ espera.veiculo }}</h4>
+                        <div style="font-size: 13px; color: #a9b1bd;">
+                            <p style="margin: 2px 0;"><strong>Cliente:</strong> {{ espera.veiculo.proprietario.first_name }} | Tel: {{ espera.veiculo.proprietario.telefone }}</p>
+                            <p style="margin: 2px 0;"><strong>Oficina Selecionada:</strong> {{ espera.oficina.nome }}</p>
+                            <p style="margin: 2px 0;"><strong>Problema:</strong> {{ espera.descricao_problema }}</p>
+                            <p style="margin: 2px 0;"><strong>Tentou em:</strong> {{ espera.criado_em|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p style="color: #a9b1bd; text-align: center;">Não há clientes na fila de espera no momento.</p>
+                {% endfor %}
+            </div>
+            
+            <button onclick="fecharModal('modalFilaExterna')" class="btn btn-red" style="width: 100%; margin-top: 15px;">Fechar</button>
+        </div>
+    </div>
 
     <script>
         // Funções para Controle dos Modais Genéricos

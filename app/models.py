@@ -41,6 +41,28 @@ class User(AbstractUser):
     # related_name='mecanicos_equipe': É um "apelido" para buscarmos todos os mecânicos de uma oficina facilmente.
     oficina_vinculada = models.ForeignKey('Workshop', on_delete=models.SET_NULL, null=True, blank=True, related_name='mecanicos_equipe')
 
+    # NOVO CAMPO: Monitor de requisições ao servidor
+    requisicoes = models.IntegerField(default=0)
+
+    @property
+    def espaco_usado_mb(self):
+        # FUNÇÃO DORMENTE: Calcula o tamanho total dos arquivos do usuário.
+        # Atualmente retorna 0. Quando implementar uploads físicos, descomente o código abaixo.
+        total_bytes = 0
+        
+        # == ATIVAÇÃO FUTURA ==
+        # Exemplo: Quando 'foto_perfil' deixar de ser URLField e virar ImageField/FileField
+        # if self.foto_perfil and hasattr(self.foto_perfil, 'size'):
+        #     total_bytes += self.foto_perfil.size
+        
+        # Exemplo: Somando anexos de manutenções desse usuário (se criar isso no futuro)
+        # for manutencao in self.maintenance_set.all():
+        #     if manutencao.nota_fiscal and hasattr(manutencao.nota_fiscal, 'size'):
+        #         total_bytes += manutencao.nota_fiscal.size
+
+        # Converte os bytes totais para Megabytes (MB) com 2 casas decimais
+        return round(total_bytes / (1024 * 1024), 2)
+
 # 2. MODELO DA OFICINA (Tabela que guarda os dados da oficina)
 class Workshop(models.Model):
     dono = models.ForeignKey(User, on_delete=models.CASCADE, related_name='oficinas_gerenciadas')
@@ -49,6 +71,9 @@ class Workshop(models.Model):
     descricao = models.TextField(blank=True, null=True)
     codigo_convite = models.CharField(max_length=15, unique=True, blank=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
+    limite_servicos_global = models.IntegerField(default=10, verbose_name="Limite Máximo de O.S da Oficina")
+    limite_por_mecanico = models.IntegerField(default=3, verbose_name="Limite Máximo de O.S por Mecânico")
+    dias_espera_lotacao = models.IntegerField(default=5, verbose_name="Dias de previsão para novas vagas")
 
     def save(self, *args, **kwargs):
         # Se a oficina não tem um código de convite, o sistema cria um automaticamente
@@ -81,6 +106,7 @@ class Vehicle(models.Model):
 class Maintenance(models.Model):
     # Opções que ditam em qual fase/etapa o serviço se encontra.
     STATUS_CHOICES = (
+    ('AGUARDANDO_VAGA', 'Aguardando Vaga (Fila)'), # Cliente abriu, mas a oficina está cheia, aguardando vaga
     ('PENDENTE', 'Pendente'),                 # Cliente abriu, esperando mecânico
     ('ACEITA', 'Aceita'),                     # Mecânico pegou o carro para avaliar
     ('AGUARDANDO_APROVACAO', 'Aguard. Aprovação'), # Vistoria feita, cliente precisa aprovar

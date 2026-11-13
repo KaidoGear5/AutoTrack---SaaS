@@ -30,6 +30,12 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['191.252.102.226', 'localhost', '127.0.0.1', 'trackmotor.com.br', 'www.trackmotor.com.br']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://localhost:8000',
+    'https://*.github.dev',
+    'https://*.app.github.dev',
+]
+
 
 # Application definition
 
@@ -41,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app', # Adicionando o app principal do projeto
+    'master_control', # Adicionando o app master_control (responsável pelo painel de controle da aplicação)
 ]
 
 MIDDLEWARE = [
@@ -51,6 +58,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'app.middleware.MonitorDeRequisicoesMiddleware', # Adicionando o middleware de monitoramento de requisições
+    'app.middleware.ManutencaoMiddleware', # Adicionando o middleware de manutenção
 ]
 
 ROOT_URLCONF = 'core.urls'
