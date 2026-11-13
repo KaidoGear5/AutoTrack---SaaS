@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include # Adicionamos a ferramenta 'include' aqui!
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('splixson/', admin.site.urls),
     # Estamos dizendo: "Qualquer endereço que não seja o /admin, mande para as URLs do 'app'"
     path('', include('app.urls')), 
 ]
