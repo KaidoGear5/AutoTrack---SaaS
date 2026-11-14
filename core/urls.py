@@ -20,8 +20,7 @@ from django.conf import settings # Importa as configurações do projeto
 from django.conf.urls.static import static # Importa a função static, que vai permitir servir arquivos estáticos (como imagens) durante o desenvolvimento
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    # Estamos dizendo: "Qualquer endereço que não seja o /admin, mande para as URLs do 'app'"
+    path('splixson/', admin.site.urls), # Estamos dizendo: "Qualquer endereço que não seja o /admin, mande para as URLs do 'app'"
     path('', include('app.urls')),
     path('master/', include('master_control.urls')), # Adicionando as URLs do app master_control
 ]
