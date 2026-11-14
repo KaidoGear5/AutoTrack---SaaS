@@ -34,7 +34,7 @@
         /* Formulários */
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 14px; font-weight: bold; color: #f39c12; margin-bottom: 8px; }
-        textarea, input[type="text"], input[type="number"], input[type="url"] { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit; font-size: 14px; }
+        textarea, input[type="text"], input[type="number"], input[type="url"], input[type="file"] { width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit; font-size: 14px; }
         textarea:focus, input:focus { outline: none; border-color: #f39c12; }
         
         hr { border: 0; border-top: 1px solid #2d3340; margin: 30px 0; }
@@ -54,7 +54,7 @@
         body.light-theme .card-interno { background-color: #f9fafb; border-color: #e5e7eb; }
         
         body.light-theme h2, body.light-theme strong, body.light-theme .user-text strong { color: #1f2937; }
-        body.light-theme textarea, body.light-theme input[type="text"], body.light-theme input[type="number"], body.light-theme input[type="url"] { color: #1f2937; background-color: #f9fafb; border-color: #d1d5db; }
+        body.light-theme textarea, body.light-theme input[type="text"], body.light-theme input[type="number"], body.light-theme input[type="url"], body.light-theme input[type="file"] { color: #1f2937; background-color: #f9fafb; border-color: #d1d5db; }
         body.light-theme textarea:focus, body.light-theme input:focus { border-color: #f39c12; }
         body.light-theme hr { border-top-color: #e5e7eb; }
         body.light-theme .table-labels { color: #6b7280; }
@@ -84,7 +84,7 @@
             <h2 style="color: #f39c12; text-align: center; margin-top: 0; margin-bottom: 5px;">Realizar Vistoria</h2>
             <p style="text-align: center; margin-bottom: 30px;">Veículo: <strong>{{ manutencao.veiculo.marca }} {{ manutencao.veiculo.modelo }} - {{ manutencao.veiculo.placa }}</strong></p>
 
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 
                 <div class="form-group">
@@ -94,11 +94,11 @@
                 
                 <div class="form-group">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <label style="margin-bottom: 0;">Imagens de Evidência (Links URL)</label>
-                        <button type="button" class="btn btn-green" onclick="adicionarLinkImagem()" style="padding: 4px 10px; font-size: 12px;">+ Adicionar Link</button>
+                        <label style="margin-bottom: 0;">Imagens de Evidência</label>
+                        <button type="button" class="btn btn-green" onclick="adicionarArquivoImagem()" style="padding: 4px 10px; font-size: 12px;">+ Anexar Imagem</button>
                     </div>
+                    <!-- A div começa vazia. Os campos só aparecem quando clica no botão -->
                     <div id="links-container">
-                        <input type="url" name="link_imagem[]" placeholder="Cole o link da imagem aqui..." style="margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px;">
                     </div>
                 </div>
                 
@@ -194,13 +194,13 @@
             calcularTotal();
         }
 
-        function adicionarLinkImagem() {
+        function adicionarArquivoImagem() {
             const container = document.getElementById('links-container');
             const row = document.createElement('div');
-            row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
+            row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
             row.innerHTML = `
-                <input type="url" name="link_imagem[]" placeholder="Cole o novo link aqui..." style="flex: 1; padding: 12px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px;">
-                <button type="button" class="btn-red" onclick="this.parentElement.remove();" style="border: none; cursor: pointer; font-weight: bold; border-radius: 6px;">X</button>
+                <input type="file" name="arquivos_imagem[]" accept="image/*" style="flex: 1;">
+                <button type="button" class="btn-red" onclick="this.parentElement.remove();" style="border: none; cursor: pointer; font-weight: bold; border-radius: 6px; padding: 12px 16px;">X</button>
             `;
             container.appendChild(row);
         }

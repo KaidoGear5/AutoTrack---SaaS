@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificação de Segurança - Trackmotor</title>
+    <style>
+        /* Base do Dark Mode */
+        body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        
+        /* Tema Claro */
+        body.light-theme { background-color: #f4f6f8; color: #4b5563; }
+        
+        /* Aumentada a largura máxima para 480px */
+        .login-container { width: 100%; max-width: 600px; padding: 20px; box-sizing: border-box; }
+        
+        .login-card { background-color: #222630; padding: 50px 40px; border-radius: 12px; border: 1px solid #2d3340; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        body.light-theme .login-card { background-color: #ffffff; border-color: #e5e7eb; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        
+        /* Título e Subtítulo */
+        .login-card h2 { color: white; margin-top: 0; margin-bottom: 5px; font-size: 32px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        body.light-theme .login-card h2 { color: #1f2937; }
+        .logo-icon { background-color: rgba(243, 156, 18, 0.1); color: #f39c12; width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; }
+        
+        .login-subtitle { color: #a9b1bd; font-size: 14px; margin-bottom: 35px; display: block; }
+        body.light-theme .login-subtitle { color: #6b7280; }
+
+        /* Formulários */
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 8px; color: white; font-weight: bold; }
+        body.light-theme .form-group label { color: #4b5563; }
+        
+        .form-control { width: 100%; box-sizing: border-box; padding: 14px; background-color: #1a1d24; border: 1px solid #2d3340; color: white; border-radius: 6px; font-family: inherit; font-size: 15px; transition: 0.3s; }
+        body.light-theme .form-control { background-color: #f9fafb; border-color: #d1d5db; color: #1f2937; }
+        .form-control:focus { outline: none; border-color: #f39c12; }
+        
+        /* Botões */
+        .btn { padding: 16px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-block; transition: 0.3s; width: 100%; font-size: 16px; font-family: inherit; margin-top: 10px; }
+        .btn-orange { background-color: #f39c12; color: white; }
+        .btn-orange:hover { background-color: #e67e22; }
+        
+        /* Links e Rodapé */
+        .footer-links { margin-top: 30px; border-top: 1px solid #2d3340; padding-top: 25px; }
+        body.light-theme .footer-links { border-color: #e5e7eb; }
+        .footer-links span { font-size: 14px; }
+        .footer-links a { color: #f39c12; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 8px; transition: 0.3s; font-size: 15px; }
+        .footer-links a:hover { color: #e67e22; text-decoration: underline; }
+
+        /* Mensagens de Erro */
+        .error-message { color: #e74c3c; font-size: 14px; font-weight: bold; margin-bottom: 15px; display: block; }
+
+        /* === ADIÇÕES DO TEMA CLARO (OVERRIDES EXTRAS GERAIS) === */
+        body.light-theme form, body.light-theme .container, body.light-theme .card, body.light-theme div[style*="background-color: #222630"] {
+            background-color: #ffffff !important; 
+            border: 1px solid #e5e7eb !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        body.light-theme h1, body.light-theme h3, body.light-theme h4, body.light-theme strong { color: #1f2937 !important; }
+        body.light-theme p, body.light-theme span { color: #4b5563 !important; }
+        
+        body.light-theme input, body.light-theme select { 
+            color: #1f2937 !important; 
+            background-color: #f9fafb !important; 
+            border: 1px solid #d1d5db !important; 
+        }
+        body.light-theme input:focus, body.light-theme select:focus { border-color: #f39c12 !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Botão de Alternar Tema -->
+    <button id="theme-toggle-btn" onclick="toggleTheme()" style="position: absolute; top: 20px; right: 30px; background: none; border: none; font-size: 24px; cursor: pointer; z-index: 1000;">🌙</button>
+
+    <div class="login-container">
+        <div class="login-card">
+            <h2>
+                <div class="logo-icon">🔒</div>
+                Segurança 2FA
+            </h2>
+            <span class="login-subtitle">Enviamos um código de 6 dígitos para o e-mail:<br><strong style="color: #f39c12;">{{ email }}</strong></span>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <span class="error-message" style="background-color: rgba(231, 76, 60, 0.1); border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 25px; border-radius: 4px; color: #e74c3c; display: block;">{{ message }}</span>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="form-group">
+                    <!-- Campo de código com formatação especial para parecer um token -->
+                    <input type="text" name="codigo" class="form-control" placeholder="000000" maxlength="6" required autofocus style="text-align: center; font-size: 28px; letter-spacing: 15px; font-weight: bold;">
+                </div>
+
+                <button type="submit" class="btn btn-orange">Validar e Entrar</button>
+            </form>
+            
+            <div class="footer-links">
+                <a href="{% url 'login' %}">← Voltar e tentar outro usuário</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Carrega automaticamente o tema que o utilizador escolheu nos painéis
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('trackmotor_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if(themeBtn) themeBtn.innerText = '☀️';
+            }
+        });
+
+        // Função para alternar e salvar o tema no navegador
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            
+            body.classList.toggle('light-theme');
+            
+            // Salva a escolha no navegador
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('trackmotor_theme', 'light');
+                themeBtn.innerText = '☀️';
+            } else {
+                localStorage.setItem('trackmotor_theme', 'dark');
+                themeBtn.innerText = '🌙';
+            }
+        }
+    </script>
+</body>
+</html>

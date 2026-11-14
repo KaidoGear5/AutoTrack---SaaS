@@ -141,3 +141,6 @@ AUTH_USER_MODEL = 'app.User'
 # Configurações de Login/Logout
 LOGIN_REDIRECT_URL = 'home'  # Para onde ir ao logar com sucesso (nossa tela inicial)
 LOGOUT_REDIRECT_URL = 'login' # Para onde ir ao clicar em sair
+# Configuração de Arquivos de Mídia (Uploads de usuários)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

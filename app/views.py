@@ -6,19 +6,97 @@
 from django.shortcuts import render, redirect, get_object_or_404
 # login_required: É um "cadeado". Se o usuário não estiver logado, não deixa acessar a função e manda pra tela de login.
 from django.contrib.auth.decorators import login_required
+from app.forms import VistoriaForm
 # São importadas as classes que criamos no models.py (Vehicle, Maintenance e ServiceItem) para manipular os dados do banco de dados.
-from .models import User, Vehicle, Maintenance, ServiceItem, Workshop, Notification
+from .models import User, Vehicle, Maintenance, ServiceItem, Workshop, Notification, TwoFactorCode, EvidenciaVistoria
 # São importados os formulários que criados no forms.py para manipular os dados do usuário.
 from .forms import VehicleForm, CustomUserCreationForm, MaintenanceForm, FinishMaintenanceForm, VistoriaForm
 from django.contrib.auth import login # Ferramenta para forçar o login automático após o cadastro
 from django.utils import timezone # Ferramenta para pegar a data e hora exata de "agora"
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, request # Essas ferramentas ajudam a enviar respostas em JSON para o front-end (JavaScript) e também a receber requisições AJAX do front-end
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import update_session_auth_hash # Ferramenta para atualizar a sessão do usuário após alterar a senha, evitando que ele seja desconectado
+from django.contrib.auth import update_session_auth_hash, authenticate  # Ferramenta para atualizar a sessão do usuário após alterar a senha; Ferramenta para verificar se a senha bate com o e-mail no login
 from django.core.paginator import Paginator # Ferramenta para dividir listas grandes em várias páginas, evitando sobrecarga de dados na tela
 from django.contrib import messages # Ferramenta para enviar mensagens de sucesso ou erro para o usuário, que aparecem na tela após uma ação
+from django.template.loader import get_template # Ferramenta para carregar templates HTML e misturar com dados do Python
+from xhtml2pdf import pisa # Ferramenta para gerar arquivos PDF a partir de templates HTML
+from django.core.mail import send_mail # Ferramenta para enviar e-mails automáticos (ex: notificações, confirmações, etc)
+import random # Ferramenta para gerar números aleatórios (ex: códigos de convite)
 
+
+# ==============================================================================
+# SISTEMA DE LOGIN E 2FA (TWO-FACTOR AUTHENTICATION)
+# ==============================================================================
+def custom_login_view(request):
+    if request.method == 'POST':
+        # 1. Captura o Nome de Usuário (Login) digitado na tela
+        nome_usuario = request.POST.get('username')
+        senha = request.POST.get('password')
+        
+        # 2. O Django verifica se o nome de usuário e senha batem
+        user = authenticate(request, username=nome_usuario, password=senha)
+        
+        if user is not None:
+            # Gera código de 6 dígitos aleatório
+            codigo_2fa = str(random.randint(100000, 999999))
+            
+            # Salva no banco de dados
+            TwoFactorCode.objects.update_or_create(
+                user=user,
+                defaults={'codigo': codigo_2fa, 'criado_em': timezone.now()}
+            )
+            
+            # 3. A MÁGICA AQUI: O sistema acessa a ficha do usuário encontrado e envia para o e-mail dele!
+            send_mail(
+                'Seu Código de Acesso - Trackmotor',
+                f'Olá {user.first_name},\n\nSeu código de verificação é: {codigo_2fa}\n\nEle expira em 10 minutos.',
+                'naoresponda@trackmotor.com.br',
+                [user.email], # Puxa automaticamente o e-mail real do cadastro
+                fail_silently=False,
+            )
+            
+            # Salva temporariamente o ID do usuário na sessão
+            request.session['pre_2fa_user_id'] = user.id
+            
+            # Redireciona para a tela do 2FA
+            return redirect('verify_2fa')
+        else:
+            messages.error(request, 'Usuário ou senha incorretos. Tente novamente.')
+            
+    # Se for GET, só mostra o login vazio
+    return render(request, 'login.html')
+
+def verify_2fa(request):
+    # Tenta descobrir quem está tentando logar
+    user_id = request.session.get('pre_2fa_user_id')
+    
+    if not user_id:
+        return redirect('login') # Se tentar entrar direto pelo link, expulsa pro login
+        
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == 'POST':
+        codigo_digitado = request.POST.get('codigo')
+        token_obj = TwoFactorCode.objects.filter(user=user).first()
+        
+        # Verifica se o código bate e se não passou de 10 minutos
+        if token_obj and token_obj.codigo == codigo_digitado and token_obj.is_valid():
+            # SUCESSO! Loga de verdade no sistema
+            login(request, user)
+            
+            # Limpa a sessão temporária e deleta o token do banco
+            del request.session['pre_2fa_user_id']
+            token_obj.delete()
+            
+            return redirect('home')
+        else:
+            messages.error(request, 'Código inválido ou expirado. Tente novamente.')
+            
+    return render(request, 'verify_2fa.html', {'email': user.email})
+
+# =======================================================
 # 1. PAINEL PRINCIPAL (Página home)
+# =======================================================
 @login_required(login_url='login')
 def home(request):
     # O Django verifica quem é o usuário logado (request.user) e qual o cargo dele (role)
@@ -93,7 +171,7 @@ def home(request):
                 return redirect('/?tab=oficinas')
 
         # Busca todas as oficinas que pertencem a este dono
-        minhas_oficinas = Workshop.objects.filter(dono=request.user)
+        minhas_oficinas = Workshop.objects.filter(dono=request.user).order_by('-id')
         
         # --- CONTAGEM DE KPIs ---
         # 1. Filtra as manutenções do dono, EXCLUINDO as que estão na Sala de Espera do Cliente
@@ -120,7 +198,7 @@ def home(request):
             veiculo_encontrado = Vehicle.objects.filter(placa=placa_buscada, manutencoes__oficina__in=minhas_oficinas).distinct().first()
 
         # ABA VEÍCULOS: Lista todos os veículos que tiveram manutenções em alguma das oficinas do dono
-        meus_veiculos = Vehicle.objects.filter(manutencoes__oficina__in=minhas_oficinas).distinct()
+        meus_veiculos = Vehicle.objects.filter(manutencoes__oficina__in=minhas_oficinas).distinct().order_by('-id')
         
         # --- (OFICINAS E VEÍCULOS) ---
         # Paginação das Oficinas (ex: 5 por página)
@@ -176,7 +254,7 @@ def home(request):
     # ROTA DO CLIENTE (Proprietário de Veículo) - Se for Cliente, direciona para a visão do cliente
     else:
         # Pega apenas os carros que pertencem ao usuário que está acessando
-        meus_carros = Vehicle.objects.filter(proprietario=request.user)
+        meus_carros = Vehicle.objects.filter(proprietario=request.user).order_by('-id')
         
         # Busca o histórico de manutenções apenas dos VEÍCULOS desse cliente específico
         minhas_manutencoes = Maintenance.objects.filter(veiculo__proprietario=request.user).order_by('-criado_em')
@@ -561,11 +639,21 @@ def realizar_vistoria(request, id):
         form = VistoriaForm(request.POST, instance=manutencao)
         if form.is_valid():
             vistoria = form.save(commit=False)
-            # Pega todos os links enviados, remove os vazios e junta com vírgula
-            links_imagens = request.POST.getlist('link_imagem[]')
-            links_limpos = [link for link in links_imagens if link.strip()]
-            vistoria.imagens_evidencia = ", ".join(links_limpos)
-            vistoria.save() # Salva o laudo principal
+            
+            # --- NOVA LÓGICA: UPLOAD DE IMAGENS REAIS ---
+            # request.FILES captura os arquivos enviados pelo formulário HTML (enctype="multipart/form-data")
+            arquivos = request.FILES.getlist('arquivos_imagem[]')
+            
+            # Salva o laudo principal ANTES de salvar as imagens, 
+            # pois as imagens precisam saber a qual 'vistoria' (ID) elas pertencem
+            vistoria.save() 
+            
+            # Para cada arquivo enviado, cria um registo na nova tabela vinculada a esta O.S
+            for arquivo in arquivos:
+                EvidenciaVistoria.objects.create(
+                    manutencao=vistoria,
+                    imagem=arquivo
+                )
             
             # Tratamento das Peças e Serviços Dinâmicos
             descricoes = request.POST.getlist('descricao[]')
@@ -835,3 +923,36 @@ def configurar_limites_oficina(request, oficina_id):
             
     # Volta para o painel mantendo a aba de oficinas aberta
     return redirect('/?tab=oficinas')
+
+# ==============================================================================
+# GERADOR DE PDF DA ORDEM DE SERVIÇO
+# ==============================================================================
+@login_required
+def gerar_pdf_os(request, id):
+    # Busca a manutenção
+    manutencao = get_object_or_404(Maintenance, id=id)
+    
+    # Pega os itens que foram aprovados para mostrar no PDF
+    itens_aprovados = manutencao.itens_servico.filter(aprovado=True)
+    
+    # Prepara os dados para o PDF
+    contexto = {
+        'manutencao': manutencao,
+        'itens': itens_aprovados,
+    }
+    
+    # Carrega o ficheiro HTML que servirá de molde para o PDF
+    template = get_template('os_pdf.html')
+    html = template.render(contexto)
+    
+    # Cria a resposta do tipo PDF
+    response = HttpResponse(content_type='application/pdf')
+    # O "inline" abre o PDF direto no navegador. Se quiser que baixe automaticamente, mude "inline" para "attachment"
+    response['Content-Disposition'] = f'inline; filename="Ordem_de_Servico_{manutencao.id}.pdf"'
+    
+    # Transforma o HTML em PDF
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    
+    if pisa_status.err:
+        return HttpResponse('Tivemos erros ao gerar o PDF', status=500)
+    return response

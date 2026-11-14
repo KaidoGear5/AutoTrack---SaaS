@@ -416,7 +416,6 @@
             {% if oficinas.has_other_pages %}
             <div class="pagination">
                 {% if oficinas.has_previous %}
-                <!-- O tab=solicitacoes garante que a aba continue aberta ao trocar de página -->
                     <a href="?tab=oficinas&page_oficinas=1" class="page-link">&laquo; Primeira</a>
                     <a href="?tab=oficinas&page_oficinas={{ oficinas.previous_page_number }}" class="page-link">Anterior</a>
                 {% else %}
@@ -435,8 +434,7 @@
                 {% endif %}
             </div>
             {% endif %}
-
-        {% endif %}
+        {% endif %} <!-- FIM DA ABA OFICINAS -->
 
         <!-- CONTEÚDO DA ABA SOLICITAÇÕES -->
         {% if aba_ativa == 'solicitacoes' %}
@@ -617,11 +615,11 @@
             {% endfor %}
 
             <!-- PAGINAÇÃO DA ABA VEÍCULOS -->
-            {% if veculos.has_other_pages %}
+            {% if veiculos.has_other_pages %}
             <div class="pagination">
                 {% if veiculos.has_previous %}
                     <a href="?tab=veiculos&page_veiculos=1" class="page-link">&laquo; Primeira</a>
-                    <a href="?tab=veiculos&page_veiculoss={{ veiculos.previous_page_number }}" class="page-link">Anterior</a>
+                    <a href="?tab=veiculos&page_veiculos={{ veiculos.previous_page_number }}" class="page-link">Anterior</a>
                 {% else %}
                     <span class="page-disabled">&laquo; Primeira</span>
                     <span class="page-disabled">Anterior</span>
@@ -638,7 +636,6 @@
                 {% endif %}
             </div>
             {% endif %}
-
         {% endif %}
 
     </div>

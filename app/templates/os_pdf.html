@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>O.S #{{ manutencao.id }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 1.5cm;
+        }
+        body { font-family: Helvetica, sans-serif; font-size: 12px; color: #333333; }
+        
+        /* CABEÇALHO */
+        .header-table { width: 100%; border-bottom: 2px solid #f39c12; padding-bottom: 10px; margin-bottom: 20px; }
+        .logo-text { font-size: 24px; font-weight: bold; color: #222630; }
+        .header-info { text-align: right; font-size: 10px; color: #7f8c8d; }
+        
+        /* BLOCOS DE INFORMAÇÃO */
+        .info-table { width: 100%; margin-bottom: 20px; }
+        .info-table td { padding: 8px; vertical-align: top; background-color: #f9fafb; border: 1px solid #ecf0f1; }
+        .section-title { font-size: 14px; font-weight: bold; color: #f39c12; margin-bottom: 5px; text-transform: uppercase; }
+        
+        /* TABELA DE PEÇAS E SERVIÇOS */
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
+        .items-table th { background-color: #222630; color: #ffffff; text-align: left; padding: 10px; font-size: 12px; }
+        .items-table td { border-bottom: 1px solid #bdc3c7; padding: 10px; font-size: 12px; }
+        .col-qtd { width: 10%; text-align: center; }
+        .col-desc { width: 50%; }
+        .col-valor { width: 20%; text-align: right; }
+        .col-total { width: 20%; text-align: right; }
+        
+        /* TOTAIS */
+        .total-box { text-align: right; margin-top: 10px; }
+        .total-text { font-size: 18px; font-weight: bold; color: #2ecc71; }
+        
+        /* DIAGNÓSTICO */
+        .diag-box { border-left: 4px solid #3498db; padding: 10px; background-color: #f4f6f8; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- CABEÇALHO -->
+    <table class="header-table">
+        <tr>
+            <td class="logo-text">🔧 Trackmotor</td>
+            <td class="header-info">
+                <strong>Ordem de Serviço #{{ manutencao.id }}</strong><br>
+                Data de Emissão: {% now "d/m/Y H:i" %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- INFORMAÇÕES CLIENTE E VEÍCULO -->
+    <table class="info-table">
+        <tr>
+            <td width="50%">
+                <div class="section-title">Dados do Cliente</div>
+                <strong>Nome:</strong> {{ manutencao.veiculo.proprietario.get_full_name|default:manutencao.veiculo.proprietario.first_name }}<br>
+                <strong>Telefone:</strong> {{ manutencao.veiculo.proprietario.telefone|default:"Não informado" }}<br>
+                <strong>E-mail:</strong> {{ manutencao.veiculo.proprietario.email }}
+            </td>
+            <td width="50%">
+                <div class="section-title">Dados do Veículo</div>
+                <strong>Veículo:</strong> {{ manutencao.veiculo.marca }} {{ manutencao.veiculo.modelo }} ({{ manutencao.veiculo.ano }})<br>
+                <strong>Placa:</strong> <span style="text-transform: uppercase;">{{ manutencao.veiculo.placa }}</span><br>
+                <strong>Oficina:</strong> {{ manutencao.oficina.nome }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- DIAGNÓSTICO -->
+    <div class="section-title">Problema Relatado & Diagnóstico</div>
+    <div class="diag-box">
+        <strong>Relato do Cliente:</strong><br>
+        {{ manutencao.descricao_problema }}
+        <br><br>
+        <strong>Diagnóstico Técnico (Mecânico {{ manutencao.mecanico.first_name }}):</strong><br>
+        {{ manutencao.diagnostico_vistoria|default:"Nenhum diagnóstico detalhado registado."|linebreaksbr }}
+    </div>
+
+    <!-- PEÇAS E SERVIÇOS -->
+    <div class="section-title">Serviços e Peças Realizados</div>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="col-qtd">Qtd</th>
+                <th class="col-desc">Descrição do Item</th>
+                <th class="col-valor">Valor Unit.</th>
+                <th class="col-total">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+            <tr>
+                <td class="col-qtd">{{ item.quantidade }}x</td>
+                <td class="col-desc">{{ item.descricao }}</td>
+                <td class="col-valor">R$ {{ item.preco }}</td>
+                <td class="col-total">R$ {% widthratio item.quantidade 1 item.preco %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center;">Nenhum item aprovado registado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- VALOR TOTAL FINAL -->
+    <div class="total-box">
+        <span>Valor Total Final: </span>
+        <span class="total-text">R$ {{ manutencao.valor }}</span>
+    </div>
+
+    <div style="text-align: center; margin-top: 50px; font-size: 10px; color: #95a5a6;">
+        Este documento é um relatório gerado digitalmente pelo sistema Trackmotor.<br>
+        Status da O.S: {{ manutencao.get_status_display }}
+    </div>
+
+</body>
+</html>

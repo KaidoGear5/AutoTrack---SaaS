@@ -7,7 +7,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     
     # Páginas de Login e Logout
-    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('login/', views.custom_login_view, name='login'), # Página de login customizada
+    path('verify-2fa/', views.verify_2fa, name='verify_2fa'), # Página de verificação do 2FA (Two-Factor Authentication)
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     # Nova página de Adicionar Carro
     path('novo-carro/', views.add_vehicle, name='add_vehicle'),
@@ -46,4 +47,6 @@ urlpatterns = [
     # Rota para o cliente reenviar ou cancelar uma ordem de serviço
     path('cliente/reenviar-os/<int:id>/', views.reenviar_os_cliente, name='reenviar_os_cliente'),
     path('cliente/cancelar-os/<int:id>/', views.cancelar_os_cliente, name='cancelar_os_cliente'),
+    # Rota para gerar PDF da ordem de serviço
+    path('os/<int:id>/pdf/', views.gerar_pdf_os, name='gerar_pdf_os'),
 ]

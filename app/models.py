@@ -7,6 +7,8 @@ from django.db import models
 # (já vem com login, senha, e-mail, etc). Esse modelo é importado para criar o nosso próprio usuário 
 # "turbinado", adicionando novos campos como 'role' (cargo), 'telefone', cnpj, etc.
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone # Importa o módulo 'timezone' do Django, que ajuda a lidar com datas e horários de forma correta, considerando fusos horários.
+from datetime import timedelta # Importa o módulo 'timedelta' do Python, que permite fazer cálculos com datas e horários (ex: "5 dias atrás", "2 horas depois", etc).
 # Importa o módulo 'random' e 'string' para gerar códigos aleatórios (ex: código de convite da oficina).
 # Eles funcionam assim como o módulo "uuid", no entanto, o uuid gera códigos gigantescos e difíceis de ler, atrapalhando a experiência do usuário.
 # Enquanto que com o random + string, é possível forçar um formato mais curto, amigável e fácil para o usuário.
@@ -46,20 +48,15 @@ class User(AbstractUser):
 
     @property
     def espaco_usado_mb(self):
-        # FUNÇÃO DORMENTE: Calcula o tamanho total dos arquivos do usuário.
-        # Atualmente retorna 0. Quando implementar uploads físicos, descomente o código abaixo.
         total_bytes = 0
         
-        # == ATIVAÇÃO FUTURA ==
-        # Exemplo: Quando 'foto_perfil' deixar de ser URLField e virar ImageField/FileField
-        # if self.foto_perfil and hasattr(self.foto_perfil, 'size'):
-        #     total_bytes += self.foto_perfil.size
+        # Procura todas as O.S que esse usuário (Mecânico) assumiu e soma o peso das fotos de vistoria
+        if self.role == 'MECANICO':
+            for os in self.servicos_realizados.all():
+                for foto in os.fotos_evidencia.all():
+                    if foto.imagem and hasattr(foto.imagem, 'size'):
+                        total_bytes += foto.imagem.size
         
-        # Exemplo: Somando anexos de manutenções desse usuário (se criar isso no futuro)
-        # for manutencao in self.maintenance_set.all():
-        #     if manutencao.nota_fiscal and hasattr(manutencao.nota_fiscal, 'size'):
-        #         total_bytes += manutencao.nota_fiscal.size
-
         # Converte os bytes totais para Megabytes (MB) com 2 casas decimais
         return round(total_bytes / (1024 * 1024), 2)
 
@@ -183,4 +180,20 @@ class Notification(models.Model):
     mensagem = models.CharField(max_length=255)
     # Flag para saber se o usuário já clicou e leu a notificação (começa sempre como Falso, ou seja, Não lida)
     lida = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+# 8. Código de Autenticação de 2 Fatores (2FA)
+class TwoFactorCode(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE) # Cada usuário tem apenas 1 código de 2FA ativo por vez
+    codigo = models.CharField(max_length=6)
+    criado_em = models.DateTimeField(auto_now_add=True) # Data e hora em que o código foi gerado (para controlar a expiração do código)
+
+    def is_valid(self):
+        # O código expira em 10 minutos (600 segundos)
+        return (timezone.now() - self.criado_em).total_seconds() < 600
+
+# 9. Fotos de Evidência da Vistoria (Upload de Arquivos)
+class EvidenciaVistoria(models.Model):
+    manutencao = models.ForeignKey(Maintenance, on_delete=models.CASCADE, related_name='fotos_evidencia')
+    imagem = models.ImageField(upload_to='vistoria_evidencias/')
     criado_em = models.DateTimeField(auto_now_add=True)

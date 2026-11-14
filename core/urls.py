@@ -14,8 +14,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
+from django.contrib import admin # Importa o módulo de administração do Django
 from django.urls import path, include # Importa a função include, que vai permitir incluir as URLs do app principal
+from django.conf import settings # Importa as configurações do projeto
+from django.conf.urls.static import static # Importa a função static, que vai permitir servir arquivos estáticos (como imagens) durante o desenvolvimento
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,3 +25,6 @@ urlpatterns = [
     path('', include('app.urls')),
     path('master/', include('master_control.urls')), # Adicionando as URLs do app master_control
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

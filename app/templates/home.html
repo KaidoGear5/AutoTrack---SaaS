@@ -318,9 +318,15 @@
                             <strong style="color: #f39c12;">Diagnóstico do Mecânico:</strong>
                             <p style="font-size: 14px; color: #a9b1bd;">{{ manutencao.diagnostico_vistoria|linebreaksbr }}</p>
                             
-                            <!-- DIV PARA AS IMAGENS -->
-                            {% if manutencao.imagens_evidencia %}
-                                <div class="galeria-evidencias" data-links="{{ manutencao.imagens_evidencia }}"></div>
+                            <!-- DIV PARA AS IMAGENS DE VISTORIA -->
+                            {% if manutencao.fotos_evidencia.all %}
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                                    {% for foto in manutencao.fotos_evidencia.all %}
+                                        <a href="{{ foto.imagem.url }}" target="_blank">
+                                            <img src="{{ foto.imagem.url }}" alt="Evidência da vistoria" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #2d3340; transition: 0.3s;" onmouseover="this.style.borderColor='#f39c12'" onmouseout="this.style.borderColor='#2d3340'">
+                                        </a>
+                                    {% endfor %}
+                                </div>
                             {% endif %}
                             
                             <hr style="border: 1px solid #2d3340; margin: 15px 0;">
@@ -411,6 +417,13 @@
                                 <strong style="color: #2ecc71; font-size: 16px;">Valor Total Final:</strong> 
                                 <strong style="font-size: 18px; color: #2ecc71;">R$ {{ manutencao.valor }}</strong>
                             </div>
+                            <!-- NOVO BOTÃO DE PDF COM DESIGN CORRIGIDO -->
+                            <div style="margin-top: 15px; text-align: right;">
+                                <a href="{% url 'gerar_pdf_os' manutencao.id %}" target="_blank" style="display: inline-block; background-color: #3498db; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: bold; transition: background-color 0.3s;">
+                                    📄 Imprimir Relatório (PDF)
+                                </a>
+                            </div>
+
                         </div>
                     {% endif %}
                 </div>
