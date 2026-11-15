@@ -10,23 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-from pathlib import Path
-import os
-from dotenv import load_dotenv
-load_dotenv()
+from pathlib import Path # Importa a classe Path, que vai permitir manipular caminhos de arquivos e pastas de forma mais fácil e segura
+import os # Importa o módulo os, que vai permitir manipular variáveis de ambiente e caminhos de arquivos e pastas
+from dotenv import load_dotenv # Importa a função load_dotenv, que vai permitir carregar variáveis de ambiente de um arquivo .env
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Controla o caminho do projeto, para que se possa referenciar arquivos e pastas de forma relativa, sem precisar colocar o caminho absoluto do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# SÓ DEPOIS do BASE_DIR criado, é chamado o dotenv:
+load_dotenv(os.path.join(BASE_DIR, '.env')) # Carrega as variáveis de ambiente do arquivo .env, que está na raiz do projeto
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'development') # Define a variável de ambiente ENVIRONMENT, que vai controlar se o projeto está em desenvolvimento ou produção. Se não estiver definida, assume o valor 'development'.
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# ALERTA DE SEGURANÇA: Mantenha a chave secreta usada em produção em segredo!
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-chave-local-de-testes-123')
+
+# ALERTA DE SEGURANÇA: Não deixe o DEBUG ativado em produção!
+DEBUG = (ENVIRONMENT == 'development')
 
 ALLOWED_HOSTS = ['191.252.102.226', 'localhost', '127.0.0.1', 'trackmotor.com.br', 'www.trackmotor.com.br']
 
@@ -85,17 +89,24 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'trackmotor_db',
-	'USER': 'trackmotor',
-	'PASSWORD': os.environ.get('DB_PASSWORD'),
-	'HOST': 'localhost',
-	'PORT': '5432',
+if ENVIRONMENT == 'production':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'trackmotor_db',
+            'USER': 'trackmotor',
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
     }
-}
-
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -138,11 +149,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Configuração de envio de e-mails (SMTP) Locaweb
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = True 
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 
 AUTH_USER_MODEL = 'app.User'
 
@@ -154,9 +168,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-# Força o HTTPS interno, impede o roubo de cookies e injeções no navegador
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+# Força o HTTPS interno, impede o roubo de cookies e injeções no navegador & Força o HTTPS interno apenas em produção (VPS)
+if ENVIRONMENT == 'production':
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True

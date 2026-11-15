@@ -21,6 +21,7 @@ from django.contrib import messages # Ferramenta para enviar mensagens de sucess
 from django.template.loader import get_template # Ferramenta para carregar templates HTML e misturar com dados do Python
 from xhtml2pdf import pisa # Ferramenta para gerar arquivos PDF a partir de templates HTML
 from django.core.mail import send_mail # Ferramenta para enviar e-mails automáticos (ex: notificações, confirmações, etc)
+from django.conf import settings # Ferramenta para acessar as configurações do Django (ex: e-mail, caminhos, etc)
 import random # Ferramenta para gerar números aleatórios (ex: códigos de convite)
 
 
@@ -50,7 +51,7 @@ def custom_login_view(request):
             send_mail(
                 'Seu Código de Acesso - Trackmotor',
                 f'Olá {user.first_name},\n\nSeu código de verificação é: {codigo_2fa}\n\nEle expira em 10 minutos.',
-                'naoresponda@trackmotor.com.br',
+                settings.DEFAULT_FROM_EMAIL, # Puxa a variável inteligente do settings.py
                 [user.email], # Puxa automaticamente o e-mail real do cadastro
                 fail_silently=False,
             )
