@@ -38,6 +38,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://localhost:8000',
     'https://*.github.dev',
     'https://*.app.github.dev',
+    'https://trackmotor.com.br',
+    'https://www.trackmotor.com.br',
 ]
 
 

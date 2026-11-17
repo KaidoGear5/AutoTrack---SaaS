@@ -2,6 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trackmotor - Criar Conta</title>
     <style>
         /* Base do Dark Mode */
@@ -72,18 +74,15 @@
         body.light-theme .dynamic-section { border-color: #e5e7eb; }
 
         /* === ADIÇÕES DO TEMA CLARO === */
-        /* Caixas principais e cards */
         body.light-theme form, body.light-theme .container, body.light-theme .card, body.light-theme div[style*="background-color: #222630"] {
             background-color: #ffffff !important; 
             border: 1px solid #e5e7eb !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         
-        /* Textos e Títulos */
         body.light-theme h1, body.light-theme h3, body.light-theme h4, body.light-theme strong { color: #1f2937 !important; }
         body.light-theme p, body.light-theme span:not(.role-title):not(.role-desc):not(.section-label) { color: #4b5563 !important; }
         
-        /* Inputs e Formulários */
         body.light-theme input, body.light-theme select { 
             color: #1f2937 !important; 
             background-color: #f9fafb !important; 
@@ -91,7 +90,6 @@
         }
         body.light-theme input:focus, body.light-theme select:focus { border-color: #f39c12 !important; }
         
-        /* Caixas de Seleção de Tipo de Conta */
         body.light-theme .role-card {
             background-color: #f9fafb !important;
             border-color: #d1d5db !important;
@@ -99,6 +97,62 @@
         body.light-theme .role-card.active {
             background-color: #fff9f0 !important;
             border-color: #f39c12 !important;
+        }
+
+        /* ========================================== */
+        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            /* 1. Redução de espaçamentos */
+            body {
+                padding: 20px 10px; /* Reduz espaço externo em dispositivos móveis */
+            }
+            .register-card {
+                padding: 25px 20px; /* Mais espaço interno para os campos */
+            }
+
+            /* 2. Botão de Alternar Tema (Ajuste para não sobrepor) */
+            #theme-toggle-btn {
+                top: 10px !important;
+                right: 15px !important;
+                font-size: 20px !important;
+            }
+
+            /* 3. Colunas do Formulário */
+            .form-row {
+                flex-direction: column; /* Coloca os inputs um debaixo do outro */
+                gap: 0;
+            }
+            .form-row .form-group {
+                margin-bottom: 20px; /* Restitui a margem que existia na class form-group */
+            }
+
+            /* 4. Cartões de Tipo de Conta (Opcional - Manter lado a lado, mas reduzidos) */
+            .role-cards {
+                gap: 10px;
+            }
+            .role-card {
+                padding: 10px 5px;
+            }
+            .role-title {
+                font-size: 13px; /* Reduz a fonte do tipo de conta */
+            }
+            .role-desc {
+                font-size: 10px;
+            }
+
+            /* 5. Botões de Ação */
+            .action-row {
+                flex-direction: column; /* Coloca o botão Cancelar debaixo do Criar conta */
+                gap: 15px;
+                margin-top: 20px;
+            }
+            .btn-orange {
+                width: 100%;
+            }
+            .btn-cancel {
+                width: 100%;
+            }
         }
     </style>
 </head>

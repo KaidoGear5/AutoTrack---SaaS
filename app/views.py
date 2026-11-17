@@ -473,7 +473,8 @@ def atendimento_balcao(request):
 
         # Coleta os dados do formulário HTML que forem preenchidos na oficina
         nome_cliente = request.POST.get('nome_cliente')
-        email_cliente = request.POST.get('email_cliente')
+        # Blindagem contra espaços e letras maiúsculas no e-mail:
+        email_cliente = request.POST.get('email_cliente', '').strip().lower()
         telefone_cliente = request.POST.get('telefone_cliente')
 
         placa = request.POST.get('placa').upper() # Garante que a placa fique maiúscula
@@ -487,16 +488,18 @@ def atendimento_balcao(request):
         cliente = User.objects.filter(email=email_cliente).first()
         
         if not cliente:
-            # Se o e-mail não existe, cria a conta do cliente silenciosamente
+            # PASSO 1: Cria a conta do cliente silenciosamente SÓ com os dados base
             # O Django vai usar o e-mail como login e a placa do carro como senha inicial
             cliente = User.objects.create_user(
                 username=email_cliente, 
                 email=email_cliente,
-                password=placa, 
-                first_name=nome_cliente,
-                telefone=telefone_cliente,
-                role='CLIENTE'
+                password=placa
             )
+            # PASSO 2: Adiciona os campos extras da nossa tabela customizada e SALVA
+            cliente.first_name = nome_cliente
+            cliente.telefone = telefone_cliente
+            cliente.role = 'CLIENTE'
+            cliente.save()
 
         # --- O VEÍCULO ---
         veiculo = Vehicle.objects.filter(placa=placa).first()
