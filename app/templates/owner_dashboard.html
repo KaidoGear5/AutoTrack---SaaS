@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <!-- (Viewport) -->
+    <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Administrativo - Trackmotor</title>
     <style>
@@ -783,7 +783,7 @@
                     <div class="form-group form-col-2">
                         <label>E-mail *</label>
                         <input type="email" name="email_cliente" class="form-control" placeholder="cliente@email.com" required>
-                        <span style="font-size: 13px; color: #a9b1bd; margin-bottom: 5px; display: block;">Usado como Usuário de Login</span>
+                        <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">Será usado como usuário de Login.</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
@@ -870,6 +870,7 @@
                     <div class="form-group form-col-2">
                         <label>E-mail (Login)</label>
                         <input type="email" name="email" class="form-control" value="{{ request.user.email }}" required>
+                        <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">Será usado como usuário de Login.</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
@@ -881,7 +882,7 @@
                 <div class="form-group">
                     <label>Nova Senha</label>
                     <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para não alterar a senha atual">
-                    <span style="font-size: 11px; color: #a9b1bd; margin-top: 5px; display: block;">A senha não pode ser inteiramente numérica e deve conter no mínimo 8 caracteres</span>
+                    <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">A senha NÃO pode ser inteiramente numérica e deve ter o Mínimo de 8 caracteres.</span>
                 </div>
 
                 <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 15px;">Salvar Alterações</button>

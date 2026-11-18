@@ -2,7 +2,11 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+<<<<<<< HEAD
     <!-- (Viewport) -->
+=======
+    <!-- Viewport -->
+>>>>>>> eb377bd97ca3c8463acf1a5e3e29e1330d92c1a4
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trackmotor - Painel do Mecânico</title>
     <style>
@@ -181,7 +185,11 @@
         body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
 
         /* ========================================== */
+<<<<<<< HEAD
         /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
+=======
+        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVO MÓVEL)    */
+>>>>>>> eb377bd97ca3c8463acf1a5e3e29e1330d92c1a4
         /* ========================================== */
         @media (max-width: 768px) {
             /* 1. Navbar e Container Geral */
@@ -240,7 +248,11 @@
             }
             .modal-content {
                 padding: 20px;
+<<<<<<< HEAD
                 width: 95%; /* Garante que o modal não vaze da tela */
+=======
+                width: 95%; /* Garante que o modal não vaza da tela */
+>>>>>>> eb377bd97ca3c8463acf1a5e3e29e1330d92c1a4
                 max-width: 100%;
             }
 
@@ -505,11 +517,11 @@
                 <div class="form-row">
                     <div class="form-group form-col">
                         <label>Placa *</label>
-                        <input type="text" name="placa" class="form-control" placeholder="ABC1234" required style="text-transform: uppercase;">
+                        <input type="text" name="placa" maxlength="7" class="form-control" placeholder="ABC1234" required style="text-transform: uppercase;">
                     </div>
                     <div class="form-group form-col">
                         <label>Ano</label>
-                        <input type="number" name="ano" class="form-control" placeholder="2020">
+                        <input type="number" name="ano" maxlength="4" class="form-control" placeholder="2020">
                     </div>
                 </div>
                 <div class="form-row">
@@ -530,8 +542,9 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group form-col-2">
-                        <label>E-mail * (Usado para login)</label>
+                        <label>E-mail *</label>
                         <input type="email" name="email_cliente" class="form-control" placeholder="cliente@email.com" required>
+                        <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">Será usado como usuário de Login.</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
@@ -592,6 +605,7 @@
                     <div class="form-group form-col-2">
                         <label>E-mail (Login)</label>
                         <input type="email" name="email" class="form-control" value="{{ request.user.email }}" required>
+                        <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">Será usado como usuário de Login.</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
@@ -603,6 +617,7 @@
                 <div class="form-group">
                     <label>Nova Senha</label>
                     <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para não alterar a senha atual">
+                    <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">A senha NÃO pode ser inteiramente numérica e deve ter o Mínimo de 8 caracteres.</span>
                 </div>
 
                 <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 15px;">Salvar Alterações</button>

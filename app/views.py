@@ -515,7 +515,8 @@ def atendimento_balcao(request):
 
         # Coleta os dados do formulário HTML
         nome_cliente = request.POST.get('nome_cliente')
-        email_cliente = request.POST.get('email_cliente')
+        # Blindagem contra espaços e letras maiúsculas no e-mail:
+        email_cliente = request.POST.get('email_cliente', '').strip().lower()
         telefone_cliente = request.POST.get('telefone_cliente')
 
         placa = request.POST.get('placa').upper() 
