@@ -1,0 +1,22 @@
+{
+  "name": "Trackmotor - Gestão Automotiva",
+  "short_name": "Trackmotor",
+  "description": "Sistema de gestão para oficinas mecânicas e proprietários de veículos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1d24",
+  "theme_color": "#f39c12",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

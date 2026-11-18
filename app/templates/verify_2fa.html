@@ -1,6 +1,9 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#f39c12">
     <meta charset="UTF-8">
     <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -164,7 +167,18 @@
                 localStorage.setItem('trackmotor_theme', 'dark');
                 themeBtn.innerText = '🌙';
             }
+        
+        // REGISTRO DO PWA (SERVICE WORKER)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/serviceworker.js').then(function(registration) {
+                    console.log('PWA: ServiceWorker registrado com sucesso!', registration.scope);
+                }, function(err) {
+                    console.log('PWA: Falha no registro do ServiceWorker.', err);
+                });
+            });
         }
-    </script>
+    }
+</script>
 </body>
 </html>
