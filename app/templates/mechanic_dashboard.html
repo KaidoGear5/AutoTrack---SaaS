@@ -2,6 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- (Viewport) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trackmotor - Painel do Mecânico</title>
     <style>
         /* Base do Dark Mode */
@@ -45,7 +47,6 @@
         body.light-theme .empty-box { background-color: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
 
         /* CORREÇÕES DE LEITURA E CONTRASTE */
-        /* Força a cor do texto para cinza escuro nas listas, parágrafos e spans */
         body.light-theme .card p,
         body.light-theme .card span:not(.badge-status),
         body.light-theme .diag-box p,
@@ -55,20 +56,17 @@
             color: #4b5563 !important;
         }
 
-        /* Textos em negrito (strong) ficam bem escuros para leitura nítida */
         body.light-theme .card strong,
         body.light-theme .diag-box strong {
             color: #1f2937 !important;
         }
 
-        /* Protege as cores Verde (Sucesso), Laranja (Alerta) e Vermelho (Obrigatório) nos textos */
         body.light-theme strong[style*="#2ecc71"],
         body.light-theme span[style*="#2ecc71"] { color: #10b981 !important; }
         body.light-theme strong[style*="#f39c12"],
         body.light-theme span[style*="#f39c12"] { color: #d97706 !important; }
         body.light-theme span[style*="#e74c3c"] { color: #dc2626 !important; }
 
-        /* Substitui os fundos pretos (inline) por caixas cinza-claras super legíveis */
         body.light-theme div[style*="background-color: #1a1d24"],
         body.light-theme div[style*="background-color: #111318"],
         body.light-theme div[style*="background-color: rgba(0,0,0,0.2)"] {
@@ -76,7 +74,6 @@
             border: 1px solid #e5e7eb !important;
         }
 
-        /* Corrige a cor do texto das notificações no Tema Claro */
         body.light-theme .notification-item p {
             color: #1f2937 !important;
         }
@@ -182,6 +179,77 @@
         body.light-theme .page-link { background-color: #f3f4f6; color: #4b5563; }
         body.light-theme .page-link:hover { background-color: #f39c12; color: white; }
         body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
+
+        /* ========================================== */
+        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            /* 1. Navbar e Container Geral */
+            .navbar {
+                flex-direction: column;
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            .nav-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .nav-actions button, .nav-actions form button {
+                margin-left: 0 !important;
+            }
+            .container {
+                padding: 20px 15px;
+            }
+
+            /* 2. Títulos e Convite */
+            .header-title h1 {
+                font-size: 26px;
+            }
+            .convite-box {
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            /* 3. Cartões de Serviço (Mudança Crítica) */
+            .card {
+                flex-direction: column; /* Empilha as informações e os botões */
+                align-items: stretch; /* Estica os botões para ocuparem 100% da largura */
+                gap: 20px; /* Espaço entre o texto e os botões */
+            }
+            .card-actions {
+                width: 100%;
+                min-width: unset;
+                align-items: stretch; /* Estica o botão internamente */
+            }
+            .card-actions .badge-status {
+                align-self: flex-start; /* Mantém o status alinhado à esquerda no dispositivo móvel */
+                margin-bottom: 10px;
+            }
+            .card-actions .btn {
+                width: 100%; /* Força todos os botões do cartão a 100% */
+                box-sizing: border-box;
+            }
+            .card-actions div[style*="display: flex; gap: 10px;"] {
+                flex-direction: column; /* Para os botões "Aceitar" e "Devolver à Fila" */
+                width: 100%;
+            }
+
+            /* 4. Formulários (Modal Balcão) */
+            .form-row {
+                flex-direction: column;
+            }
+            .modal-content {
+                padding: 20px;
+                width: 95%; /* Garante que o modal não vaze da tela */
+                max-width: 100%;
+            }
+
+            /* 5. Sidebar de Notificações */
+            .notification-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -256,7 +324,7 @@
         {% else %}
 
             <div style="text-align: center; margin-bottom: 30px;">
-                <button onclick="abrirModal('modalAtendimento')" class="btn btn-orange" style="font-size: 16px; padding: 12px 25px;">
+                <button onclick="abrirModal('modalAtendimento')" class="btn btn-orange" style="font-size: 16px; padding: 12px 25px; width: 100%;">
                     + Novo Atendimento
                 </button>
             </div>

@@ -371,18 +371,62 @@ def delete_vehicle(request, id):
     contexto = {'carro': carro}
     return render(request, 'delete_vehicle.html', contexto)
 
+
 # ==============================================================================
 # AUTENTICAÇÃO E CADASTROS NOVOS
 # ==============================================================================
 def register(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST) # Tenta criar com os dados digitados
+        form = CustomUserCreationForm(request.POST) 
         if form.is_valid():
-            user = form.save() # Salva o novo usuário no banco com senha criptografada (o Django já faz isso natualmente)
-            login(request, user) # Já faz o login automático ao finalizar o cadastro (sem precisar digitar login e senha)
-            return redirect('home') # Redireciona para a página inicial após o cadastro
+            # 1. Salva o usuário em memória para adicionar os dados extras
+            user = form.save(commit=False)
+            
+            # Pega os dados que vieram do HTML
+            role = request.POST.get('role', 'CLIENTE')
+            user.role = role # Define o cargo
+            user.telefone = request.POST.get('telefone', '')
+            
+            # Pega os dados profissionais e salva no USER correto
+            if role == 'MECANICO':
+                user.especialidade = request.POST.get('especialidade', '')
+            elif role == 'DONO':
+                user.cnpj = request.POST.get('cnpj', '') # O CNPJ pertence à tabela User
+                
+            # Salva o usuário no banco de dados agora completo
+            user.save()
+            
+            # 2. LÓGICA DE CRIAÇÃO DA OFICINA (PARA O DONO)
+            if role == 'DONO':
+                nome_oficina = request.POST.get('nome_oficina')
+                
+                if nome_oficina:
+                    # Cria a oficina e vincula este usuário como dono dela
+                    # ATENÇÃO: Verifique se importou "Workshop" no topo do ficheiro
+                    Workshop.objects.create(
+                        nome=nome_oficina,
+                        dono=user
+                    )
+            
+            # 3. LÓGICA DE VÍNCULO POR CONVITE (PARA O MECÂNICO)
+            elif role == 'MECANICO':
+                codigo_convite = request.POST.get('codigo_convite')
+                if codigo_convite:
+                    try:
+                        # Se digitar um código válido, já vincula à oficina
+                        # Usa .upper() para garantir que corresponde independentemente de como foi digitado
+                        oficina_destino = Workshop.objects.get(codigo_convite=codigo_convite.upper())
+                        user.oficina_vinculada = oficina_destino
+                        user.save()
+                    except Workshop.DoesNotExist:
+                        # Se o código for inválido, ignora a vinculação agora
+                        pass
+
+            # 4. Faz o login automático e redireciona
+            login(request, user) 
+            return redirect('home') 
     else:
-        form = CustomUserCreationForm() # Entrega o formulário vazio para o visitante
+        form = CustomUserCreationForm() 
         
     contexto = {'form': form}
     return render(request, 'register.html', contexto)
@@ -450,59 +494,57 @@ def request_maintenance(request):
 @login_required(login_url='login')
 def atendimento_balcao(request):
     if request.method == 'POST':
-        oficina_atual = None # Identifica de qual oficina está vindo o pedido
+        oficina_atual = None 
         if request.user.role == 'DONO':
-            oficina_atual = request.user.oficinas_gerenciadas.first() # Pega a primeira oficina que o dono gerencia
+            oficina_atual = request.user.oficinas_gerenciadas.first() 
         elif request.user.role == 'MECANICO':
-            oficina_atual = request.user.oficina_vinculada # Pega a oficina que o mecânico está vinculado
+            oficina_atual = request.user.oficina_vinculada 
             
         if not oficina_atual:
-            return redirect('home') # Se por algum motivo não tiver oficina, aborta a missão
+            return redirect('home')
 
         # --- VERIFICAÇÃO DE LOTAÇÃO (MOTOR DE CAPACIDADE) ---
-        # Conta as Ordens de Serviço ativas nesta oficina específica
         os_ativas = Maintenance.objects.filter(
             oficina=oficina_atual, 
             status__in=['PENDENTE', 'AGUARDANDO_APROVACAO', 'ACEITA', 'ANDAMENTO']
         ).count()
         
-        # Se a oficina atingiu ou passou do limite global, exibe o erro e bloqueia a criação
         if os_ativas >= oficina_atual.limite_servicos_global:
             messages.error(request, f'⚠️ Lotação Atingida! A oficina já atingiu o limite máximo de {oficina_atual.limite_servicos_global} serviços em andamento.')
             return redirect('home')
 
-        # Coleta os dados do formulário HTML que forem preenchidos na oficina
+        # Coleta os dados do formulário HTML
         nome_cliente = request.POST.get('nome_cliente')
         email_cliente = request.POST.get('email_cliente')
         telefone_cliente = request.POST.get('telefone_cliente')
 
-        placa = request.POST.get('placa').upper() # Garante que a placa fique maiúscula
+        placa = request.POST.get('placa').upper() 
         marca = request.POST.get('marca')
         modelo = request.POST.get('modelo')
-        ano = request.POST.get('ano', 2020) # 2020 como padrão se não preencherem
+        ano = request.POST.get('ano', 2020) 
         descricao_problema = request.POST.get('descricao_problema')
-        tipo_servico = request.POST.get('tipo', 'CORRETIVA') # Corretiva por padrão
+        tipo_servico = request.POST.get('tipo', 'CORRETIVA') 
 
         # --- O CLIENTE (SILENT ONBOARDING) ---
         cliente = User.objects.filter(email=email_cliente).first()
         
         if not cliente:
-            # Se o e-mail não existe, cria a conta do cliente silenciosamente
-            # O Django vai usar o e-mail como login e a placa do carro como senha inicial
+            # 1. Cria apenas o utilizador base (username, email, password)
             cliente = User.objects.create_user(
                 username=email_cliente, 
                 email=email_cliente,
-                password=placa, 
-                first_name=nome_cliente,
-                telefone=telefone_cliente,
-                role='CLIENTE'
+                password=placa
             )
+            # 2. Adiciona os campos extra e guarda novamente na base de dados
+            cliente.first_name = nome_cliente
+            cliente.telefone = telefone_cliente
+            cliente.role = 'CLIENTE'
+            cliente.save()
 
         # --- O VEÍCULO ---
         veiculo = Vehicle.objects.filter(placa=placa).first()
         
         if not veiculo:
-            # Cria o carro e já vincula ao proprietário (cliente) que foi criado anteriormente
             veiculo = Vehicle.objects.create(
                 placa=placa,
                 marca=marca,
@@ -512,16 +554,14 @@ def atendimento_balcao(request):
             )
 
         # --- A ORDEM DE SERVIÇO ---
-        # Abre o chamado já amarrado à oficina exata de quem registrou!
         Maintenance.objects.create(
             veiculo=veiculo,
             oficina=oficina_atual,
             descricao_problema=descricao_problema,
             tipo=tipo_servico,
-            status='PENDENTE' # Cai direto na fila de espera desta oficina
+            status='PENDENTE' 
         )
 
-        # Volta para a página inicial (que vai recarregar o dashboard do Dono ou Mecânico atualizado)
         return redirect('home')
         
     return redirect('home')

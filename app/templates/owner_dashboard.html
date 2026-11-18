@@ -2,6 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- (Viewport) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Administrativo - Trackmotor</title>
     <style>
         /* Base do Dark Mode inspirado no Figma */
@@ -51,7 +53,6 @@
         }
 
         /* CORREÇÕES DE LEITURA E CONTRASTE */
-        /* Força a cor do texto para cinza escuro nas listas, parágrafos e spans */
         body.light-theme .card p,
         body.light-theme .card span:not(.badge-status),
         body.light-theme .diag-box p,
@@ -61,20 +62,17 @@
             color: #4b5563 !important;
         }
 
-        /* Textos em negrito (strong) ficam bem escuros para leitura nítida */
         body.light-theme .card strong,
         body.light-theme .diag-box strong {
             color: #1f2937 !important;
         }
 
-        /* Protege as cores Verde (Sucesso), Laranja (Alerta) e Vermelho (Obrigatório) nos textos */
         body.light-theme strong[style*="#2ecc71"],
         body.light-theme span[style*="#2ecc71"] { color: #10b981 !important; }
         body.light-theme strong[style*="#f39c12"],
         body.light-theme span[style*="#f39c12"] { color: #d97706 !important; }
         body.light-theme span[style*="#e74c3c"] { color: #dc2626 !important; }
 
-        /* Substitui os fundos pretos (inline) por caixas cinza-claras super legíveis */
         body.light-theme div[style*="background-color: #1a1d24"],
         body.light-theme div[style*="background-color: #111318"],
         body.light-theme div[style*="background-color: rgba(0,0,0,0.2)"] {
@@ -82,7 +80,6 @@
             border: 1px solid #e5e7eb !important;
         }
 
-        /* Corrige a cor do texto das notificações no Tema Claro */
         body.light-theme .notification-item p {
             color: #1f2937 !important;
         }
@@ -218,6 +215,106 @@
         .alert-box { padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid transparent; }
         .alert-error { background-color: rgba(231, 76, 60, 0.1); border-color: #e74c3c; color: #e74c3c; }
         .alert-success { background-color: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
+
+        /* ========================================== */
+        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            /* 1. Navbar e Container Geral */
+            .navbar {
+                flex-direction: column;
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            .nav-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .nav-actions button, .nav-actions form button {
+                margin-left: 0 !important;
+            }
+            .container {
+                padding: 20px 15px;
+            }
+
+            /* 2. KPIs (Indicadores) */
+            .kpi-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .kpi-card {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            /* 3. Indicador de Fila de Espera Externa */
+            div[style*="justify-content: space-between; align-items: center;"] {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 15px;
+            }
+            div[style*="justify-content: space-between; align-items: center;"] button {
+                width: 100%;
+            }
+
+            /* 4. Abas de Navegação (Tabs) */
+            .tabs {
+                flex-wrap: wrap; /* Permite que os botões caiam para a linha de baixo */
+                gap: 5px;
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }
+            .tab-btn {
+                flex: 1 1 45%; /* Cada botão ocupa quase metade da largura */
+                background-color: #222630;
+                border: 1px solid #2d3340;
+                font-size: 13px;
+                padding: 10px;
+            }
+
+            /* 5. Cartões de Solicitações e Oficinas */
+            .solicitacao-card, .oficina-top, .card-padrao {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            .solicitacao-card > div:last-child {
+                width: 100%;
+                text-align: left !important;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            /* Ajuste dos Botões dentro de Oficinas */
+            div[style*="display: flex; justify-content: space-between; align-items: flex-end;"] {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 15px;
+            }
+            .btn-blue {
+                width: 100%;
+            }
+
+            /* 6. Formulários e Modais */
+            .form-row, .card-padrao form {
+                flex-direction: column;
+            }
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+                max-width: 100%;
+            }
+            .card-padrao button[type="submit"] {
+                width: 100%;
+            }
+
+            /* 7. Sidebar de Notificações */
+            .notification-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -558,14 +655,14 @@
                     <!-- Carro Encontrado -->
                     <div style="background-color: rgba(16, 185, 129, 0.05); padding: 20px; border-radius: 12px; border: 1px solid #10b981; margin-top: 20px;">
                         <h4 style="color: #10b981; margin-top: 0; font-size: 18px;">✅ Veículo Encontrado no seu Histórico!</h4>
-                        <div style="display: flex; gap: 20px;">
-                            <div style="flex: 1;">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px;">
                                 <p style="margin: 5px 0;"><strong>Placa:</strong> <span class="text-highlight" style="text-transform: uppercase;">{{ veiculo_encontrado.placa }}</span></p>
                                 <p style="margin: 5px 0;"><strong>Veículo:</strong> <span class="text-highlight">{{ veiculo_encontrado.marca }} {{ veiculo_encontrado.modelo }} ({{ veiculo_encontrado.ano }})</span></p>
                                 <p style="margin: 5px 0;"><strong>Proprietário:</strong> <span class="text-highlight">{{ veiculo_encontrado.proprietario.first_name }} | Tel: {{ veiculo_encontrado.proprietario.telefone }}</span></p>
                             </div>
                             
-                            <div class="card-interno" style="flex: 1;">
+                            <div class="card-interno" style="flex: 1; min-width: 250px;">
                                 <h5 style="margin-top: 0; color: #ff7b00; margin-bottom: 10px;">Abrir Nova Ordem de Serviço</h5>
                                 <form method="POST" action="{% url 'nova_os_existente' veiculo_encontrado.id %}">
                                     {% csrf_token %}
@@ -658,11 +755,12 @@
                 <div class="form-row">
                     <div class="form-group form-col">
                         <label>Placa *</label>
-                        <input type="text" name="placa" class="form-control text-uppercase" placeholder="ABC1234" required>
+                        <input type="text" name="placa" maxlength="7" class="form-control text-uppercase" placeholder="ABC1234" required>
+                        <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">Esta placa será usada como a senha inicial do cliente.</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Ano</label>
-                        <input type="number" name="ano" class="form-control" placeholder="2020">
+                        <input type="number" name="ano" maxlength="4" class="form-control" placeholder="2020">
                     </div>
                 </div>
                 <div class="form-row">
@@ -683,12 +781,13 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group form-col-2">
-                        <label>E-mail * (Usado para login)</label>
+                        <label>E-mail *</label>
                         <input type="email" name="email_cliente" class="form-control" placeholder="cliente@email.com" required>
+                        <span style="font-size: 13px; color: #a9b1bd; margin-bottom: 5px; display: block;">Usado como Usuário de Login</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
-                        <input type="text" name="telefone_cliente" class="form-control" placeholder="(11) 99999-9999">
+                        <input type="text" name="telefone_cliente" maxlength="15" class="form-control" placeholder="(11) 99999-9999">
                     </div>
                 </div>
 
@@ -774,7 +873,7 @@
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
-                        <input type="text" name="telefone" class="form-control" value="{{ request.user.telefone|default:'' }}">
+                        <input type="text" name="telefone" maxlength="15" class="form-control" value="{{ request.user.telefone|default:'' }}">
                     </div>
                 </div>
 
@@ -782,6 +881,7 @@
                 <div class="form-group">
                     <label>Nova Senha</label>
                     <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para não alterar a senha atual">
+                    <span style="font-size: 11px; color: #a9b1bd; margin-top: 5px; display: block;">A senha não pode ser inteiramente numérica e deve conter no mínimo 8 caracteres</span>
                 </div>
 
                 <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 15px;">Salvar Alterações</button>

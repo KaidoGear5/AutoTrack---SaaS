@@ -2,6 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- (Viewport) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Mecânico - Realizar Vistoria</title>
     <style>
         /* Base do Dark Mode */
@@ -61,6 +63,125 @@
         
         input[readonly] { background-color: #2d3340 !important; color: #a9b1bd !important; cursor: not-allowed; }
         body.light-theme input[readonly] { background-color: #e5e7eb !important; color: #6b7280 !important; }
+
+        /* ========================================== */
+        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            /* 1. Navbar e Container Geral */
+            .navbar {
+                flex-direction: column;
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            .nav-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .container {
+                padding: 15px; /* Reduz margens do contentor principal */
+            }
+            .card-padrao {
+                padding: 20px; /* Reduz margens internas da caixa cinzenta */
+            }
+
+            /* 2. Botão de Anexar Imagem e Formulário */
+            div[style*="justify-content: space-between; align-items: center; margin-bottom: 8px;"] {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 10px;
+            }
+            div[style*="justify-content: space-between; align-items: center; margin-bottom: 8px;"] button {
+                width: 100%;
+            }
+
+            /* 3. Título de Orçamento e Botão de Adicionar Peça */
+            div[style*="justify-content: space-between; align-items: center; margin-bottom: 20px;"] {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 15px;
+                margin-bottom: 30px !important;
+            }
+
+            /* 4. Tabela de Orçamento - Transformação Crítica */
+            .table-labels {
+                display: none; /* Esconde os cabeçalhos de tabela */
+            }
+            .item-row {
+                flex-wrap: wrap; /* Permite quebrar a linha */
+                background-color: #1a1d24; /* Fundo de destaque na linha */
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid #2d3340;
+                margin-bottom: 15px !important;
+                position: relative; /* Para posicionar o botão X depois */
+            }
+            body.light-theme .item-row {
+                background-color: #f9fafb;
+                border-color: #e5e7eb;
+            }
+            
+            /* Ajuste dos inputs dentro do bloco empilhado */
+            .item-row input[name="quantidade[]"] {
+                width: 70px !important; /* Menor */
+                flex: none !important;
+            }
+            .item-row input[name="descricao[]"] {
+                flex: 1 !important; /* Ocupa o resto da 1ª linha */
+            }
+            .item-row input[name="preco[]"] {
+                width: 100% !important; /* Vai para a 2ª linha */
+                margin-top: 10px;
+            }
+            
+            /* Ajuste do Subtotal e Botão Apagar */
+            .linha-subtotal {
+                width: 100% !important;
+                text-align: left !important; /* Alinhado à esquerda na linha de baixo */
+                margin-top: 10px;
+                font-size: 16px !important;
+            }
+            .item-row button {
+                position: absolute;
+                top: -10px;
+                right: -10px; /* Botão X no canto superior do bloco */
+                border-radius: 50% !important;
+                width: 30px;
+                height: 30px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            }
+            .item-row > div:last-child {
+                display: none; /* Esconde o espaço vazio (44px) do CSS original */
+            }
+
+            /* 5. Linhas dinâmicas de imagens (se adicionadas) */
+            #links-container > div {
+                flex-direction: column;
+                background-color: #1a1d24;
+                padding: 10px;
+                border-radius: 8px;
+                border: 1px solid #2d3340;
+            }
+            body.light-theme #links-container > div {
+                background-color: #f9fafb;
+                border-color: #e5e7eb;
+            }
+            #links-container > div button {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            /* 6. Total Previsto */
+            .card-interno {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>

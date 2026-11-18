@@ -2,6 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- Adicionada a tag viewport para dispositivos móveis -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trackmotor - Login</title>
     <style>
         /* Base do Dark Mode */
@@ -49,18 +51,15 @@
         .error-message { color: #e74c3c; font-size: 14px; font-weight: bold; margin-bottom: 15px; display: block; }
 
         /* === TEMA CLARO === */
-        /* Caixas principais e cards */
         body.light-theme form, body.light-theme .container, body.light-theme .card, body.light-theme div[style*="background-color: #222630"] {
             background-color: #ffffff !important; 
             border: 1px solid #e5e7eb !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         
-        /* Textos e Títulos */
         body.light-theme h1, body.light-theme h3, body.light-theme h4, body.light-theme strong { color: #1f2937 !important; }
         body.light-theme p, body.light-theme span { color: #4b5563 !important; }
         
-        /* Inputs e Formulários */
         body.light-theme input, body.light-theme select { 
             color: #1f2937 !important; 
             background-color: #f9fafb !important; 
@@ -68,7 +67,6 @@
         }
         body.light-theme input:focus, body.light-theme select:focus { border-color: #f39c12 !important; }
         
-        /* Caixas de Seleção de Tipo de Conta*/
         body.light-theme .tipo-conta, body.light-theme div[style*="border: 1px solid #2d3340"] {
             background-color: #f9fafb !important;
             border-color: #d1d5db !important;
@@ -76,6 +74,31 @@
         body.light-theme div[style*="border-color: #f39c12"], body.light-theme div[style*="border: 1px solid #f39c12"] {
             background-color: #fff9f0 !important;
             border-color: #f39c12 !important;
+        }
+
+        /* 2. MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS) */
+        @media (max-width: 768px) {
+            /* Reduz as margens internas do cartão para dar mais espaço ao texto no dispositivo móvel */
+            .login-card {
+                padding: 30px 20px;
+            }
+            
+            /* Ajusta o posicionamento do botão de tema para não sobrepor o conteúdo */
+            #theme-toggle-btn {
+                top: 10px !important;
+                right: 15px !important;
+                font-size: 20px !important;
+            }
+            
+            /* Diminui ligeiramente o tamanho do logotipo e título */
+            .logo-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+            .login-card h2 {
+                font-size: 26px;
+            }
         }
     </style>
 </head>

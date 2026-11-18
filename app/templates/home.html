@@ -2,12 +2,14 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- (Viewport) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trackmotor - Painel do Cliente</title>
     <style>
         /* Base do Dark Mode */
         body { background-color: #1a1d24; color: #a9b1bd; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         
-        /* TEMA CLARO (Overrides)                    */
+        /* TEMA CLARO (Overrides) */
         body.light-theme { background-color: #f4f6f8; color: #4b5563; }
 
         body.light-theme .navbar, body.light-theme .card, body.light-theme .diag-box, 
@@ -42,7 +44,6 @@
         }
 
         /* CORREÇÕES DE LEITURA E CONTRASTE */
-        /* Força a cor do texto para cinza escuro nas listas, parágrafos e spans */
         body.light-theme .card p,
         body.light-theme .card span:not(.badge-status),
         body.light-theme .diag-box p,
@@ -52,20 +53,17 @@
             color: #4b5563 !important;
         }
 
-        /* Textos em negrito (strong) ficam bem escuros para leitura nítida */
         body.light-theme .card strong,
         body.light-theme .diag-box strong {
             color: #1f2937 !important;
         }
 
-        /* Protege as cores Verde (Sucesso), Laranja (Alerta) e Vermelho (Obrigatório) nos textos */
         body.light-theme strong[style*="#2ecc71"],
         body.light-theme span[style*="#2ecc71"] { color: #10b981 !important; }
         body.light-theme strong[style*="#f39c12"],
         body.light-theme span[style*="#f39c12"] { color: #d97706 !important; }
         body.light-theme span[style*="#e74c3c"] { color: #dc2626 !important; }
 
-        /* Substitui os fundos pretos (inline) por caixas cinza-claras super legíveis */
         body.light-theme div[style*="background-color: #1a1d24"],
         body.light-theme div[style*="background-color: #111318"],
         body.light-theme div[style*="background-color: rgba(0,0,0,0.2)"] {
@@ -73,7 +71,6 @@
             border: 1px solid #e5e7eb !important;
         }
 
-        /* Corrige a cor do texto das notificações no Tema Claro */
         body.light-theme .notification-item p {
             color: #1f2937 !important;
         }
@@ -87,7 +84,6 @@
         .alert-success { background-color: rgba(46, 204, 113, 0.1); border-color: #2ecc71; color: #2ecc71; }
         .alert-warning { background-color: rgba(243, 156, 18, 0.1); border-color: #f39c12; color: #f39c12; }
         
-        /* COR ESPECIAL PARA O STATUS 'AGUARDANDO VAGA' */
         .status-aguardando-vaga { 
             background-color: rgba(231, 76, 60, 0.1) !important; 
             color: #e74c3c !important; 
@@ -171,7 +167,6 @@
         .notification-item p { margin: 0 0 5px 0; font-size: 13px; color: white; }
         .notification-item small { font-size: 11px; color: #a9b1bd; }
 
-        /* Indicador de Notificação no Botão */
         .badge-notificacao { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; border: 2px solid #222630; }
 
         /* Modais / Pop-ups */
@@ -190,6 +185,94 @@
         body.light-theme .page-link { background-color: #f3f4f6; color: #4b5563; }
         body.light-theme .page-link:hover { background-color: #f39c12; color: white; }
         body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
+
+        /* ========================================== */
+        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            /* 1. Navbar e Container Geral */
+            .navbar {
+                flex-direction: column; /* Empilha o perfil e as ações */
+                padding: 15px 20px;
+                gap: 15px;
+            }
+            .nav-actions {
+                width: 100%;
+                justify-content: space-between; /* Espalha os botões horizontalmente */
+            }
+            .nav-actions button, .nav-actions form button {
+                margin-left: 0 !important; /* Remove margens do PC */
+            }
+            .container {
+                padding: 20px 15px; /* Reduz as bordas laterais */
+            }
+
+            /* 2. Botões Principais de Ação */
+            div[style*="display: flex; gap: 15px; margin-bottom: 40px;"] {
+                flex-direction: column; /* Botões Cadastrar/Problema ocupam 100% da largura */
+            }
+            .btn {
+                width: 100%;
+                text-align: center;
+                margin-bottom: 5px;
+            }
+
+            /* 3. Cartões de Veículos */
+            .card-vehicle {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .card-vehicle > div:last-child {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            /* 4. Histórico (Grelha passa para 1 coluna) */
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
+            .history-info {
+                text-align: left !important;
+            }
+
+            /* 5. Tabelas de Orçamento (Evita quebra de layout) */
+            .budget-header {
+                display: none; /* Esconde o cabeçalho complexo no dispositivo móvel */
+            }
+            .item-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .budget-header-right {
+                width: 100%;
+                justify-content: flex-end;
+                gap: 20px;
+            }
+            
+            /* 6. Formulários e Modais */
+            .form-row {
+                flex-direction: column; /* Colunas dos formulários (Ex: Placa e Ano) ocupam 100% */
+            }
+            .modal-content {
+                padding: 20px;
+            }
+
+            /* 7. Sidebar de Notificações */
+            .notification-sidebar {
+                width: 100%; /* Ocupa 100% da tela quando aberta no dispositivo móvel */
+                right: -100%;
+            }
+            
+            /* 8. Botões nas Fila de Espera/Orçamento */
+            .diag-box div[style*="display: flex; gap: 10px;"] {
+                flex-direction: column;
+            }
+            .diag-box form {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>

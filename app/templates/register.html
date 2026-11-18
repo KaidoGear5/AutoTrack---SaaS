@@ -2,6 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <!-- (Viewport) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trackmotor - Criar Conta</title>
     <style>
         /* Base do Dark Mode */
@@ -72,18 +74,15 @@
         body.light-theme .dynamic-section { border-color: #e5e7eb; }
 
         /* === ADIÇÕES DO TEMA CLARO === */
-        /* Caixas principais e cards */
         body.light-theme form, body.light-theme .container, body.light-theme .card, body.light-theme div[style*="background-color: #222630"] {
             background-color: #ffffff !important; 
             border: 1px solid #e5e7eb !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         
-        /* Textos e Títulos */
         body.light-theme h1, body.light-theme h3, body.light-theme h4, body.light-theme strong { color: #1f2937 !important; }
         body.light-theme p, body.light-theme span:not(.role-title):not(.role-desc):not(.section-label) { color: #4b5563 !important; }
         
-        /* Inputs e Formulários */
         body.light-theme input, body.light-theme select { 
             color: #1f2937 !important; 
             background-color: #f9fafb !important; 
@@ -91,7 +90,6 @@
         }
         body.light-theme input:focus, body.light-theme select:focus { border-color: #f39c12 !important; }
         
-        /* Caixas de Seleção de Tipo de Conta */
         body.light-theme .role-card {
             background-color: #f9fafb !important;
             border-color: #d1d5db !important;
@@ -99,6 +97,62 @@
         body.light-theme .role-card.active {
             background-color: #fff9f0 !important;
             border-color: #f39c12 !important;
+        }
+
+        /* ========================================== */
+        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            /* 1. Redução de espaçamentos */
+            body {
+                padding: 20px 10px; /* Reduz espaço externo em dispositivos móveis */
+            }
+            .register-card {
+                padding: 25px 20px; /* Mais espaço interno para os campos */
+            }
+
+            /* 2. Botão de Alternar Tema (Ajuste para não sobrepor) */
+            #theme-toggle-btn {
+                top: 10px !important;
+                right: 15px !important;
+                font-size: 20px !important;
+            }
+
+            /* 3. Colunas do Formulário */
+            .form-row {
+                flex-direction: column; /* Coloca os inputs um debaixo do outro */
+                gap: 0;
+            }
+            .form-row .form-group {
+                margin-bottom: 20px; /* Restitui a margem que existia na class form-group */
+            }
+
+            /* 4. Cartões de Tipo de Conta (Opcional - Manter lado a lado, mas reduzidos) */
+            .role-cards {
+                gap: 10px;
+            }
+            .role-card {
+                padding: 10px 5px;
+            }
+            .role-title {
+                font-size: 13px; /* Reduz a fonte do tipo de conta */
+            }
+            .role-desc {
+                font-size: 10px;
+            }
+
+            /* 5. Botões de Ação */
+            .action-row {
+                flex-direction: column; /* Coloca o botão Cancelar debaixo do Criar conta */
+                gap: 15px;
+                margin-top: 20px;
+            }
+            .btn-orange {
+                width: 100%;
+            }
+            .btn-cancel {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -131,7 +185,7 @@
                 <span class="section-label">Tipo de conta</span>
                 <div class="role-cards">
                     <div class="role-card active" id="card_cliente" onclick="selectRole('CLIENTE')">
-                        <span class="role-title">Proprietário</span>
+                        <span class="role-title">Cliente</span>
                         <span class="role-desc">Tenho um carro</span>
                     </div>
                     <div class="role-card" id="card_mecanico" onclick="selectRole('MECANICO')">
@@ -161,6 +215,7 @@
                     <div class="form-group form-col">
                         <label>Usuário (Login) *</label>
                         <input type="text" name="username" class="form-control" placeholder="ex: carlos123" required>
+                        <span style="font-size: 11px; color: #a9b1bd; margin-top: 5px; display: block;">O usuário deve ter entre 5 e 15 caracteres e não pode conter espaço</span>
                     </div>
                     <div class="form-group form-col">
                         <label>E-mail *</label>
@@ -172,6 +227,7 @@
                     <div class="form-group form-col">
                         <label>Senha *</label>
                         <input type="password" name="password1" class="form-control" placeholder="Crie uma senha forte" required>
+                        <span style="font-size: 11px; color: #a9b1bd; margin-top: 5px; display: block;">A senha não pode ser inteiramente numérica e deve conter no mínimo 8 caracteres</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Confirmar Senha *</label>
@@ -188,7 +244,7 @@
                         <input type="text" name="cnpj" maxlength="18" class="form-control" placeholder="00.000.000/0000-00">
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="campo_especialidade">
                         <label>Especialidade</label>
                         <select name="especialidade" class="form-control">
                             <option value="">Selecione sua especialidade (Opcional)</option>
@@ -231,65 +287,72 @@
     </div>
 
     <script>
-        // Lógica para alternar os Cartões e exibir os campos correspondentes
-        function selectRole(role) {
-            // 1. Atualizar o valor do input escondido que vai para o Banco de Dados
-            document.getElementById('role_input').value = role;
+    // Lógica para alternar os Cartões e exibir os campos correspondentes
+    function selectRole(role) {
+        // 1. Atualizar o valor do input escondido que vai para o Banco de Dados
+        document.getElementById('role_input').value = role;
 
-            // 2. Remover a classe 'active' de todos os cartões
-            document.getElementById('card_cliente').classList.remove('active');
-            document.getElementById('card_mecanico').classList.remove('active');
-            document.getElementById('card_dono').classList.remove('active');
+        // 2. Remover a classe 'active' de todos os cartões
+        document.getElementById('card_cliente').classList.remove('active');
+        document.getElementById('card_mecanico').classList.remove('active');
+        document.getElementById('card_dono').classList.remove('active');
 
-            // 3. Esconder todas as secções dinâmicas
-            document.getElementById('dados_profissionais').style.display = 'none';
-            document.getElementById('dados_convite').style.display = 'none';
-            document.getElementById('dados_oficina').style.display = 'none';
+        // 3. Esconder todas as secções dinâmicas
+        document.getElementById('dados_profissionais').style.display = 'none';
+        document.getElementById('dados_convite').style.display = 'none';
+        document.getElementById('dados_oficina').style.display = 'none';
 
-            // 4. Ativar o cartão clicado e mostrar os campos adequados
-            if (role === 'CLIENTE') {
-                document.getElementById('card_cliente').classList.add('active');
-                // Cliente não tem campos extras neste design
-            } 
-            else if (role === 'MECANICO') {
-                document.getElementById('card_mecanico').classList.add('active');
-                document.getElementById('dados_profissionais').style.display = 'block';
-                document.getElementById('dados_convite').style.display = 'block';
-            } 
-            else if (role === 'DONO') {
-                document.getElementById('card_dono').classList.add('active');
-                document.getElementById('dados_profissionais').style.display = 'block';
-                document.getElementById('dados_oficina').style.display = 'block';
-            }
+        // Garante que o campo aparece por padrão quando a seção profissional é aberta
+        document.getElementById('campo_especialidade').style.display = 'block';
+
+        // 4. Ativar o cartão clicado e mostrar os campos adequados
+        if (role === 'CLIENTE') {
+            document.getElementById('card_cliente').classList.add('active');
+            // Cliente não tem campos extras neste design
+        } 
+        else if (role === 'MECANICO') {
+            document.getElementById('card_mecanico').classList.add('active');
+            document.getElementById('dados_profissionais').style.display = 'block';
+            document.getElementById('dados_convite').style.display = 'block';
+            // Garante que a especialidade volta a aparecer para o Mecânico
+            document.getElementById('campo_especialidade').style.display = 'block';
+        } 
+        else if (role === 'DONO') {
+            document.getElementById('card_dono').classList.add('active');
+            document.getElementById('dados_profissionais').style.display = 'block';
+            document.getElementById('dados_oficina').style.display = 'block';
+            // Esconde a especialidade especificamente para o Dono
+            document.getElementById('campo_especialidade').style.display = 'none';
         }
+    }
 
-        // Carrega automaticamente o tema que o usuário escolheu nos painéis
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('trackmotor_theme');
-            const themeBtn = document.getElementById('theme-toggle-btn');
-            
-            if (savedTheme === 'light') {
-                document.body.classList.add('light-theme');
-                if(themeBtn) themeBtn.innerText = '☀️';
-            }
-        });
-
-        // Função para alternar e salvar o tema no navegador
-        function toggleTheme() {
-            const body = document.body;
-            const themeBtn = document.getElementById('theme-toggle-btn');
-            
-            body.classList.toggle('light-theme');
-            
-            // Salva a escolha no navegador
-            if (body.classList.contains('light-theme')) {
-                localStorage.setItem('trackmotor_theme', 'light');
-                themeBtn.innerText = '☀️';
-            } else {
-                localStorage.setItem('trackmotor_theme', 'dark');
-                themeBtn.innerText = '🌙';
-            }
+    // Carrega automaticamente o tema que o usuário escolheu nos painéis
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('trackmotor_theme');
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            if(themeBtn) themeBtn.innerText = '☀️';
         }
-    </script>
+    });
+
+    // Função para alternar e salvar o tema no navegador
+    function toggleTheme() {
+        const body = document.body;
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        
+        body.classList.toggle('light-theme');
+        
+        // Salva a escolha no navegador
+        if (body.classList.contains('light-theme')) {
+            localStorage.setItem('trackmotor_theme', 'light');
+            themeBtn.innerText = '☀️';
+        } else {
+            localStorage.setItem('trackmotor_theme', 'dark');
+            themeBtn.innerText = '🌙';
+        }
+    }
+</script>
 </body>
 </html>
