@@ -169,10 +169,17 @@
             <h2>Criar conta</h2>
             <span class="register-subtitle">Comece a usar o Trackmotor gratuitamente</span>
 
-            <!-- MOSTRAR ERROS DO FORMULÁRIO -->
+           <!-- MOSTRAR ERROS DO FORMULÁRIO -->
             {% if form.errors %}
                 <div class="error-message">
-                    <strong>Erro ao criar conta:</strong> Verifique se os dados estão corretos. (O usuário/e-mail já pode estar em uso, ou as senhas não coincidem).
+                    <strong>Erro ao criar conta:</strong>
+                    <ul style="margin: 8px 0 0 18px; padding: 0; text-align: left;">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
                 </div>
             {% endif %}
 
