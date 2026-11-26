@@ -417,7 +417,7 @@
             <div class="section-header">
                 <div>
                     <h3>Minhas Oficinas</h3>
-                    <span style="font-size: 13px;">{{ oficinas.count }} oficina(s) gerenciada(s)</span>
+                    <span style="font-size: 13px;">{{ oficinas.paginator.count }} oficina(s) gerenciada(s)</span>
                 </div>
                 <button class="btn btn-orange" onclick="abrirModal('modalOficina')">+ Nova Oficina</button>
             </div>
@@ -428,6 +428,9 @@
                         <div>
                             <h4>{{ oficina.nome }}</h4>
                             <p>{{ oficina.endereco|default:"Endereço não cadastrado" }}</p>
+                            {% if oficina.descricao %}
+                                <p style="margin-top: 6px; font-size: 13px; color: #a9b1bd;">{{ oficina.descricao }}</p>
+                            {% endif %}
                         </div>
                         <div class="badge-ativa">Ativa</div>
                     </div>
@@ -436,7 +439,7 @@
                         <strong>{{ oficina.codigo_convite }}</strong>
                     </div>
                     
-                    <!-- CONTAGEM DE MECÂNICOS E LIMITES -->
+                    <!-- CONTAGEM DE MECÂNICOS, EDIÇÃO E LIMITES -->
                     <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
                         <div style="font-size: 13px;">
                             {% if oficina.mecanicos_equipe.count > 0 %}
@@ -451,8 +454,41 @@
                             </div>
                         </div>
                         
-                        <!-- Botão para abrir o modal de limites -->
-                        <button onclick="abrirModal('modalLimites-{{ oficina.id }}')" class="btn btn-blue" style="padding: 6px 12px; font-size: 12px;">Configurar Limites</button>
+                        <!-- Botões de Edição e Limites -->
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="abrirModal('modalEditarOficina-{{ oficina.id }}')" class="btn btn-orange" style="padding: 6px 12px; font-size: 12px;">Editar Dados</button>
+                            <button onclick="abrirModal('modalLimites-{{ oficina.id }}')" class="btn btn-blue" style="padding: 6px 12px; font-size: 12px;">Configurar Limites</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POP-UP PARA EDITAR DADOS DA OFICINA -->
+                <div id="modalEditarOficina-{{ oficina.id }}" class="modal">
+                    <div class="modal-content">
+                        <span class="close-btn" onclick="fecharModal('modalEditarOficina-{{ oficina.id }}')">&times;</span>
+                        <h3 style="color: white; margin-top: 0; font-size: 20px;">Editar Oficina</h3>
+                        <p style="color: #a9b1bd; font-size: 13px; margin-bottom: 20px;">Complete ou atualize as informações da sua oficina.</p>
+
+                        <form method="POST" action="{% url 'editar_oficina' oficina.id %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>Nome da oficina *</label>
+                                <input type="text" name="nome" class="form-control" value="{{ oficina.nome }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>CNPJ</label>
+                                <input type="text" name="cnpj" maxlength="18" class="form-control" value="{{ request.user.cnpj|default:'' }}" placeholder="00.000.000/0000-00">
+                            </div>
+                            <div class="form-group">
+                                <label>Endereço</label>
+                                <input type="text" name="endereco" class="form-control" value="{{ oficina.endereco|default:'' }}" placeholder="Av. Principal, 123 - São Paulo/SP">
+                            </div>
+                            <div class="form-group">
+                                <label>Descrição</label>
+                                <textarea name="descricao" class="form-control" rows="3" placeholder="Especialidades e serviços oferecidos...">{{ oficina.descricao|default:'' }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-orange" style="width: 100%; margin-top: 10px;">Salvar Alterações</button>
+                        </form>
                     </div>
                 </div>
 
@@ -502,7 +538,6 @@
                                 </div>
                             </div>
                             
-                            <!-- NOVO CAMPO: PREVISÃO DE ESPERA -->
                             <div class="form-group" style="margin-top: 10px;">
                                 <label>Previsão de Vagas (Dias) *</label>
                                 <input type="number" name="dias_espera" class="form-control" value="{{ oficina.dias_espera_lotacao }}" min="1" required>

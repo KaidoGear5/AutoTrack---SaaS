@@ -44,6 +44,8 @@ urlpatterns = [
     path('perfil/atualizar/', views.atualizar_perfil, name='atualizar_perfil'),
     # Rota para Limitar o número de ordens de serviço que uma oficina pode ter em andamento
     path('oficina/limites/<int:oficina_id>/', views.configurar_limites_oficina, name='configurar_limites_oficina'),
+    # Rota para editar as informações da oficina
+    path('oficina/editar/<int:oficina_id>/', views.editar_oficina, name='editar_oficina'),
     # Rota para o cliente reenviar ou cancelar uma ordem de serviço
     path('cliente/reenviar-os/<int:id>/', views.reenviar_os_cliente, name='reenviar_os_cliente'),
     path('cliente/cancelar-os/<int:id>/', views.cancelar_os_cliente, name='cancelar_os_cliente'),

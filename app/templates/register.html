@@ -196,9 +196,9 @@
 
             <form method="POST">
                 {% csrf_token %}
-                
+
                 <!-- CAMPO OCULTO QUE GUARDA O CARGO SELECIONADO -->
-                <input type="hidden" name="role" id="role_input" value="CLIENTE">
+                <input type="hidden" name="role" id="role_input" value="{{ request.POST.role|default:'CLIENTE' }}">
 
                 <span class="section-label">Tipo de conta</span>
                 <div class="role-cards">
@@ -217,27 +217,27 @@
                 </div>
 
                 <span class="section-label">Dados Pessoais & Acesso</span>
-                
+
                 <div class="form-row">
                     <div class="form-group form-col">
                         <label>Nome completo *</label>
-                        <input type="text" name="first_name" class="form-control" placeholder="Seu nome" required>
+                        <input type="text" name="first_name" class="form-control" placeholder="Seu nome" value="{{ request.POST.first_name|default:'' }}" required>
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
-                        <input type="text" name="telefone" maxlength="15" class="form-control" placeholder="(00) 00000-0000">
+                        <input type="text" name="telefone" maxlength="15" class="form-control" placeholder="(00) 00000-0000" value="{{ request.POST.telefone|default:'' }}">
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group form-col">
                         <label>Usuário (Login) *</label>
-                        <input type="text" name="username" class="form-control" placeholder="ex: carlos123" required>
+                        <input type="text" name="username" class="form-control" placeholder="ex: carlos123" value="{{ request.POST.username|default:'' }}" required>
                         <span style="font-size: 11px; color: #a9b1bd; margin-top: 5px; display: block;">O usuário deve ter entre 5 e 15 caracteres e não pode conter espaço</span>
                     </div>
                     <div class="form-group form-col">
                         <label>E-mail *</label>
-                        <input type="email" name="email" class="form-control" placeholder="seu@email.com" required>
+                        <input type="email" name="email" class="form-control" placeholder="seu@email.com" value="{{ request.POST.email|default:'' }}" required>
                     </div>
                 </div>
 
@@ -256,20 +256,20 @@
                 <!-- DADOS ESPECÍFICOS DE MECÂNICO E DONO -->
                 <div id="dados_profissionais" class="dynamic-section">
                     <span class="section-label">Dados Profissionais</span>
-                    
+
                     <div class="form-group">
                         <label>CNPJ da oficina</label>
-                        <input type="text" name="cnpj" maxlength="18" class="form-control" placeholder="00.000.000/0000-00">
+                        <input type="text" name="cnpj" maxlength="18" class="form-control" placeholder="00.000.000/0000-00" value="{{ request.POST.cnpj|default:'' }}">
                     </div>
-                    
+
                     <div class="form-group" id="campo_especialidade">
                         <label>Especialidade</label>
                         <select name="especialidade" class="form-control">
                             <option value="">Selecione sua especialidade (Opcional)</option>
-                            <option value="Geral">Mecânica Geral</option>
-                            <option value="Eletrica">Elétrica Automotiva</option>
-                            <option value="Suspensao">Suspensão e Freios</option>
-                            <option value="Motor">Motor e Câmbio</option>
+                            <option value="Geral" {% if request.POST.especialidade == 'Geral' %}selected{% endif %}>Mecânica Geral</option>
+                            <option value="Eletrica" {% if request.POST.especialidade == 'Eletrica' %}selected{% endif %}>Elétrica Automotiva</option>
+                            <option value="Suspensao" {% if request.POST.especialidade == 'Suspensao' %}selected{% endif %}>Suspensão e Freios</option>
+                            <option value="Motor" {% if request.POST.especialidade == 'Motor' %}selected{% endif %}>Motor e Câmbio</option>
                         </select>
                     </div>
                 </div>
@@ -279,7 +279,7 @@
                     <span class="section-label" style="margin-top: 25px;">Código de Convite (Opcional)</span>
                     <div class="form-group">
                         <label>Código da oficina</label>
-                        <input type="text" name="codigo_convite" class="form-control" placeholder="Ex: OFC-SILVA" style="text-transform: uppercase;">
+                        <input type="text" name="codigo_convite" class="form-control" placeholder="Ex: OFC-SILVA" value="{{ request.POST.codigo_convite|default:'' }}" style="text-transform: uppercase;">
                         <span style="font-size: 11px; color: #a9b1bd; margin-top: 5px; display: block;">Peça ao dono da oficina o código de convite para ingressar na equipe.</span>
                     </div>
                 </div>
@@ -289,7 +289,7 @@
                     <span class="section-label" style="margin-top: 25px;">Sua Oficina</span>
                     <div class="form-group">
                         <label>Nome da sua oficina *</label>
-                        <input type="text" name="nome_oficina" class="form-control" placeholder="Ex: Auto Center Silva">
+                        <input type="text" name="nome_oficina" id="input_nome_oficina" class="form-control" placeholder="Ex: Auto Center Silva" value="{{ request.POST.nome_oficina|default:'' }}">
                         <span style="font-size: 11px; color: #a9b1bd; margin-top: 5px; display: block;">Um código de convite único será gerado para você convidar mecânicos.</span>
                     </div>
                 </div>
@@ -298,72 +298,67 @@
                     <button type="submit" class="btn btn-orange">Criar conta</button>
                     <a href="{% url 'login' %}" class="btn-cancel">Cancelar</a>
                 </div>
-                
+
                 <p class="footer-note">* Campos obrigatórios</p>
             </form>
         </div>
     </div>
 
     <script>
-    // Lógica para alternar os Cartões e exibir os campos correspondentes
-    function selectRole(role) {
-        // 1. Atualizar o valor do input escondido que vai para o Banco de Dados
-        document.getElementById('role_input').value = role;
+        function selectRole(role) {
+            document.getElementById('role_input').value = role;
 
-        // 2. Remover a classe 'active' de todos os cartões
-        document.getElementById('card_cliente').classList.remove('active');
-        document.getElementById('card_mecanico').classList.remove('active');
-        document.getElementById('card_dono').classList.remove('active');
+            document.getElementById('card_cliente').classList.remove('active');
+            document.getElementById('card_mecanico').classList.remove('active');
+            document.getElementById('card_dono').classList.remove('active');
 
-        // 3. Esconder todas as secções dinâmicas
-        document.getElementById('dados_profissionais').style.display = 'none';
-        document.getElementById('dados_convite').style.display = 'none';
-        document.getElementById('dados_oficina').style.display = 'none';
-
-        // Garante que o campo aparece por padrão quando a seção profissional é aberta
-        document.getElementById('campo_especialidade').style.display = 'block';
-
-        // 4. Ativar o cartão clicado e mostrar os campos adequados
-        if (role === 'CLIENTE') {
-            document.getElementById('card_cliente').classList.add('active');
-            // Cliente não tem campos extras neste design
-        } 
-        else if (role === 'MECANICO') {
-            document.getElementById('card_mecanico').classList.add('active');
-            document.getElementById('dados_profissionais').style.display = 'block';
-            document.getElementById('dados_convite').style.display = 'block';
-            // Garante que a especialidade volta a aparecer para o Mecânico
+            document.getElementById('dados_profissionais').style.display = 'none';
+            document.getElementById('dados_convite').style.display = 'none';
+            document.getElementById('dados_oficina').style.display = 'none';
             document.getElementById('campo_especialidade').style.display = 'block';
-        } 
-        else if (role === 'DONO') {
-            document.getElementById('card_dono').classList.add('active');
-            document.getElementById('dados_profissionais').style.display = 'block';
-            document.getElementById('dados_oficina').style.display = 'block';
-            // Esconde a especialidade especificamente para o Dono
-            document.getElementById('campo_especialidade').style.display = 'none';
-        }
-    }
 
-    // Carrega automaticamente o tema que o usuário escolheu nos painéis
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('trackmotor_theme');
-        const themeBtn = document.getElementById('theme-toggle-btn');
-        
-        if (savedTheme === 'light') {
-            document.body.classList.add('light-theme');
-            if(themeBtn) themeBtn.innerText = '☀️';
-        }
-    });
+            const inputNomeOficina = document.getElementById('input_nome_oficina');
+            inputNomeOficina.required = false;
 
-    // Função para alternar e salvar o tema no navegador
-    function toggleTheme() {
-        const body = document.body;
-        const themeBtn = document.getElementById('theme-toggle-btn');
-        
-        body.classList.toggle('light-theme');
-        
-        // Salva a escolha no navegador
-        if (body.classList.contains('light-theme')) {
+            if (role === 'CLIENTE') {
+                document.getElementById('card_cliente').classList.add('active');
+            }
+            else if (role === 'MECANICO') {
+                document.getElementById('card_mecanico').classList.add('active');
+                document.getElementById('dados_profissionais').style.display = 'block';
+                document.getElementById('dados_convite').style.display = 'block';
+                document.getElementById('campo_especialidade').style.display = 'block';
+            }
+            else if (role === 'DONO') {
+                document.getElementById('card_dono').classList.add('active');
+                document.getElementById('dados_profissionais').style.display = 'block';
+                document.getElementById('dados_oficina').style.display = 'block';
+                document.getElementById('campo_especialidade').style.display = 'none';
+                inputNomeOficina.required = true;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Restaura o cartão selecionado (útil caso o formulário recarregue com aviso de erro)
+            const roleAtual = document.getElementById('role_input').value || 'CLIENTE';
+            selectRole(roleAtual);
+
+            const savedTheme = localStorage.getItem('trackmotor_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if (themeBtn) themeBtn.innerText = '☀️';
+            }
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+
+            body.classList.toggle('light-theme');
+
+            if (body.classList.contains('light-theme')) {
                 localStorage.setItem('trackmotor_theme', 'light');
                 themeBtn.innerText = '☀️';
             } else {

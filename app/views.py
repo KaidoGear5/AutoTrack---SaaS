@@ -23,6 +23,7 @@ from xhtml2pdf import pisa # Ferramenta para gerar arquivos PDF a partir de temp
 from django.core.mail import send_mail # Ferramenta para enviar e-mails automáticos (ex: notificações, confirmações, etc)
 from django.conf import settings # Ferramenta para acessar as configurações do Django (ex: e-mail, caminhos, etc)
 import random # Ferramenta para gerar números aleatórios (ex: códigos de convite)
+from django.db import transaction # Ferramenta para garantir que várias operações no banco de dados aconteçam juntas, evitando inconsistências
 
 
 # ==============================================================================
@@ -377,57 +378,56 @@ def delete_vehicle(request, id):
 # ==============================================================================
 def register(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST) 
+        form = CustomUserCreationForm(request.POST)
+        role = request.POST.get('role', 'CLIENTE').strip().upper()
+        nome_oficina = request.POST.get('nome_oficina', '').strip()
+
+        # Trava obrigatória no servidor: Dono precisa informar o nome da oficina
+        if role == 'DONO' and not nome_oficina:
+            form.add_error(None, 'Informe o nome da sua oficina para criar uma conta de Dono.')
+
         if form.is_valid():
-            # 1. Salva o usuário em memória para adicionar os dados extras
-            user = form.save(commit=False)
-            
-            # Pega os dados que vieram do HTML
-            role = request.POST.get('role', 'CLIENTE')
-            user.role = role # Define o cargo
-            user.telefone = request.POST.get('telefone', '')
-            
-            # Pega os dados profissionais e salva no USER correto
-            if role == 'MECANICO':
-                user.especialidade = request.POST.get('especialidade', '')
-            elif role == 'DONO':
-                user.cnpj = request.POST.get('cnpj', '') # O CNPJ pertence à tabela User
-                
-            # Salva o usuário no banco de dados agora completo
-            user.save()
-            
-            # 2. LÓGICA DE CRIAÇÃO DA OFICINA (PARA O DONO)
-            if role == 'DONO':
-                nome_oficina = request.POST.get('nome_oficina')
-                
-                if nome_oficina:
-                    # Cria a oficina e vincula este usuário como dono dela
-                    # ATENÇÃO: Verifique se importou "Workshop" no topo do ficheiro
-                    Workshop.objects.create(
+            with transaction.atomic():
+                # 1. Salva o usuário em memória para adicionar os dados extras
+                user = form.save(commit=False)
+                user.role = role
+                user.telefone = request.POST.get('telefone', '').strip()
+
+                if role == 'MECANICO':
+                    user.especialidade = request.POST.get('especialidade', '').strip()
+                elif role == 'DONO':
+                    user.cnpj = request.POST.get('cnpj', '').strip()
+
+                user.save()
+
+                # 2. CRIAÇÃO GARANTIDA DA OFICINA (PARA O DONO)
+                if role == 'DONO':
+                    oficina_criada = Workshop.objects.create(
                         nome=nome_oficina,
                         dono=user
                     )
-            
-            # 3. LÓGICA DE VÍNCULO POR CONVITE (PARA O MECÂNICO)
-            elif role == 'MECANICO':
-                codigo_convite = request.POST.get('codigo_convite')
-                if codigo_convite:
-                    try:
-                        # Se digitar um código válido, já vincula à oficina
-                        # Usa .upper() para garantir que corresponde independentemente de como foi digitado
-                        oficina_destino = Workshop.objects.get(codigo_convite=codigo_convite.upper())
-                        user.oficina_vinculada = oficina_destino
-                        user.save()
-                    except Workshop.DoesNotExist:
-                        # Se o código for inválido, ignora a vinculação agora
-                        pass
+                    messages.success(
+                        request,
+                        f'Oficina "{oficina_criada.nome}" criada com sucesso! Se desejar, clique em "Editar Dados" para adicionar endereço e descrição.'
+                    )
 
-            # 4. Faz o login automático e redireciona
-            login(request, user) 
-            return redirect('home') 
+                # 3. VÍNCULO POR CONVITE (PARA O MECÂNICO)
+                elif role == 'MECANICO':
+                    codigo_convite = request.POST.get('codigo_convite', '').strip()
+                    if codigo_convite:
+                        oficina_destino = Workshop.objects.filter(
+                            codigo_convite=codigo_convite.upper()
+                        ).first()
+                        if oficina_destino:
+                            user.oficina_vinculada = oficina_destino
+                            user.save()
+
+            # 4. Faz o login automático e redireciona para o painel
+            login(request, user)
+            return redirect('home')
     else:
-        form = CustomUserCreationForm() 
-        
+        form = CustomUserCreationForm()
+
     contexto = {'form': form}
     return render(request, 'register.html', contexto)
 
@@ -944,7 +944,7 @@ def marcar_notificacoes_lidas(request):
     return JsonResponse({'status': 'erro'}, status=400)
 
 # ==============================================================================
-# CONFIGURAÇÃO DE LIMITES DE O.S. POR OFICINA
+# CONFIGURAÇÃO DA OFICINA
 # ==============================================================================
 @login_required
 def configurar_limites_oficina(request, oficina_id):
@@ -964,6 +964,31 @@ def configurar_limites_oficina(request, oficina_id):
             oficina.save()
             
     # Volta para o painel mantendo a aba de oficinas aberta
+    return redirect('/?tab=oficinas')
+
+@login_required(login_url='login')
+def editar_oficina(request, oficina_id):
+    if request.method == 'POST' and request.user.role == 'DONO':
+        oficina = get_object_or_404(Workshop, id=oficina_id, dono=request.user)
+
+        nome = request.POST.get('nome', '').strip()
+        endereco = request.POST.get('endereco', '').strip()
+        descricao = request.POST.get('descricao', '').strip()
+        cnpj = request.POST.get('cnpj', '').strip()
+
+        if nome:
+            oficina.nome = nome
+            oficina.endereco = endereco
+            oficina.descricao = descricao
+            oficina.save()
+
+            request.user.cnpj = cnpj
+            request.user.save()
+
+            messages.success(request, f'Dados da oficina "{oficina.nome}" atualizados com sucesso!')
+        else:
+            messages.error(request, 'O nome da oficina não pode ficar em branco.')
+
     return redirect('/?tab=oficinas')
 
 # ==============================================================================
