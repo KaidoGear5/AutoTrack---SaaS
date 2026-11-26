@@ -1,13 +1,20 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-<<<<<<< HEAD
-    <!-- (Viewport) -->
-=======
-    <!-- Viewport -->
->>>>>>> eb377bd97ca3c8463acf1a5e3e29e1330d92c1a4
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Configurações do PWA e Ícones (Android, iPhone e Navegador) -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#f39c12">
+    <link rel="icon" type="image/png" href="{% static 'icon-192x192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'icon-192x192.png' %}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trackmotor">
+
     <title>Trackmotor - Painel do Mecânico</title>
     <style>
         /* Base do Dark Mode */
@@ -185,11 +192,7 @@
         body.light-theme .page-disabled { background-color: #ffffff; border-color: #e5e7eb; color: #9ca3af; }
 
         /* ========================================== */
-<<<<<<< HEAD
         /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVOS MÓVEIS)    */
-=======
-        /* MEDIA QUERIES (AJUSTES PARA DISPOSITIVO MÓVEL)    */
->>>>>>> eb377bd97ca3c8463acf1a5e3e29e1330d92c1a4
         /* ========================================== */
         @media (max-width: 768px) {
             /* 1. Navbar e Container Geral */
@@ -248,11 +251,7 @@
             }
             .modal-content {
                 padding: 20px;
-<<<<<<< HEAD
                 width: 95%; /* Garante que o modal não vaze da tela */
-=======
-                width: 95%; /* Garante que o modal não vaza da tela */
->>>>>>> eb377bd97ca3c8463acf1a5e3e29e1330d92c1a4
                 max-width: 100%;
             }
 
@@ -743,6 +742,17 @@
                 localStorage.setItem('trackmotor_theme', 'dark');
                 themeBtn.innerText = '🌙';
             }
+        }
+
+        // REGISTRO DO PWA (SERVICE WORKER)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/serviceworker.js').then(function(registration) {
+                    console.log('PWA: ServiceWorker registrado com sucesso!', registration.scope);
+                }, function(err) {
+                    console.log('PWA: Falha no registro do ServiceWorker.', err);
+                });
+            });
         }
     </script>
 </body>

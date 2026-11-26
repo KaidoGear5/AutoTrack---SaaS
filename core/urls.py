@@ -18,11 +18,14 @@ from django.contrib import admin # Importa o módulo de administração do Djang
 from django.urls import path, include # Importa a função include, que vai permitir incluir as URLs do app principal
 from django.conf import settings # Importa as configurações do projeto
 from django.conf.urls.static import static # Importa a função static, que vai permitir servir arquivos estáticos (como imagens) durante o desenvolvimento
+from django.views.generic import TemplateView # Importa a classe TemplateView, que vai permitir renderizar templates HTML diretamente sem precisar de uma view específica
 
 urlpatterns = [
     path('splixson/', admin.site.urls), # Estamos dizendo: "Qualquer endereço que não seja o /admin, mande para as URLs do 'app'"
     path('', include('app.urls')),
     path('master/', include('master_control.urls')), # Adicionando as URLs do app master_control
+    # Adicionando a URL para o service worker, que é um arquivo JavaScript que vai permitir que o PWA funcione offline
+    path('serviceworker.js', TemplateView.as_view(template_name="serviceworker.js", content_type='application/javascript'), name='serviceworker.js'),
 ]
 
 if settings.DEBUG:
