@@ -147,9 +147,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Diz ao Django exatamente onde procurar os arquivos estáticos (como o manifest.json)
-STATICFILES_DIRS = [
-    BASE_DIR / 'app' / 'static',
-]
+STATICFILES_DIRS = []
 
 
 # Email
