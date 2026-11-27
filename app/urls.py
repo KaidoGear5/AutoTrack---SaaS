@@ -8,7 +8,8 @@ urlpatterns = [
     
     # Páginas de Login e Logout
     path('login/', views.custom_login_view, name='login'), # Página de login customizada
-    path('verify-2fa/', views.verify_2fa, name='verify_2fa'), # Página de verificação do 2FA (Two-Factor Authentication)
+    path('escolher-perfil/', views.escolher_perfil_login, name='escolher_perfil'), # Hub para escolher qual conta acessar quando o e-mail tem mais de 1 perfil
+    path('verify-2fa/', views.verify_2fa, name='verify_2fa'), # Página de verificação do 2FA (Two-Factor Authentication)    
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     # Nova página de Adicionar Carro
     path('novo-carro/', views.add_vehicle, name='add_vehicle'),

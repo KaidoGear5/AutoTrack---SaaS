@@ -27,46 +27,137 @@ from django.db import transaction # Ferramenta para garantir que várias operaç
 
 
 # ==============================================================================
-# SISTEMA DE LOGIN E 2FA (TWO-FACTOR AUTHENTICATION)
+# SISTEMA DE LOGIN, HUB DE PERFIS E 2FA (TWO-FACTOR AUTHENTICATION)
 # ==============================================================================
+
+# FUNÇÃO AUXILIAR 1: Centraliza o disparo do código de 6 dígitos por e-mail.
+# Assim evitamos repetir código tanto no login direto quanto na tela do Hub!
+def _iniciar_fluxo_2fa(request, user):
+    # Gera código de 6 dígitos aleatório
+    codigo_2fa = str(random.randint(100000, 999999))
+    
+    # Salva (ou atualiza) o código de verificação desse usuário específico no banco
+    TwoFactorCode.objects.update_or_create(
+        user=user,
+        defaults={'codigo': codigo_2fa, 'criado_em': timezone.now()}
+    )
+    
+    # Envia o código para o e-mail cadastrado avisando qual perfil está sendo acessado
+    send_mail(
+        'Seu Código de Acesso - Trackmotor',
+        f'Olá {user.first_name or user.username},\n\nSeu código de verificação para acessar o perfil ({user.get_role_display()}) é: {codigo_2fa}\n\nEle expira em 10 minutos.',
+        settings.DEFAULT_FROM_EMAIL, # Puxa o remetente configurado no settings.py
+        [user.email], # Envia para o e-mail real do usuário
+        fail_silently=False,
+    )
+    
+    # Limpa os dados temporários do Hub da memória da sessão (caso o usuário tenha passado pelo Hub)
+    request.session.pop('hub_email', None)
+    request.session.pop('hub_unlocked_ids', None)
+
+    # Guarda o ID do usuário escolhido na sessão para a função 'verify_2fa' saber quem validar
+    request.session['pre_2fa_user_id'] = user.id
+    
+    # Manda para a sua função 'verify_2fa' (que continua logo abaixo no código!)
+    return redirect('verify_2fa')
+
+
+# FUNÇÃO 2: Tela inicial de Login (decide se vai direto pro 2FA ou se abre o Hub)
 def custom_login_view(request):
     if request.method == 'POST':
-        # 1. Captura o Nome de Usuário (Login) digitado na tela
-        nome_usuario = request.POST.get('username')
-        senha = request.POST.get('password')
-        
-        # 2. O Django verifica se o nome de usuário e senha batem
-        user = authenticate(request, username=nome_usuario, password=senha)
-        
+        # 1. Captura o texto digitado (pode ser Nome de Usuário ou E-mail) e a senha
+        identificador = request.POST.get('username', '').strip()
+        senha = request.POST.get('password', '')
+
+        # CAMINHO A: Se tem '@' no texto, a pessoa digitou um E-MAIL
+        if '@' in identificador:
+            # Busca todas as contas que usam esse e-mail (pode ter até 3: Cliente, Mecânico e Dono)
+            contas_email = User.objects.filter(email__iexact=identificador).order_by('id')
+
+            if contas_email.exists():
+                # Testa em quais dessas contas a senha digitada funciona
+                contas_autenticadas = [
+                    u for u in contas_email
+                    if authenticate(request, username=u.username, password=senha) is not None
+                ]
+
+                # Só avança se a senha digitada bater com pelo menos 1 das contas desse e-mail
+                if contas_autenticadas:
+                    # Se só existe 1 conta nesse e-mail ao todo, não precisa de Hub: dispara o 2FA direto!
+                    if contas_email.count() == 1:
+                        return _iniciar_fluxo_2fa(request, contas_autenticadas[0])
+
+                    # Se existem 2 ou 3 contas nesse e-mail, guarda na sessão quais já tiveram a senha validada
+                    # e manda para a tela do Hub ANTES de enviar qualquer e-mail de 2FA!
+                    request.session['hub_email'] = identificador.lower()
+                    request.session['hub_unlocked_ids'] = [u.id for u in contas_autenticadas]
+                    return redirect('escolher_perfil')
+
+            messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
+            return render(request, 'login.html')
+
+        # CAMINHO B: Não tem '@', então a pessoa digitou o NOME DE USUÁRIO direto.
+        # Como o nome de usuário é único para cada conta, já sabemos exatamente qual perfil ela quer!
+        usuario_direto = User.objects.filter(username__iexact=identificador).first()
+        user = None
+        if usuario_direto:
+            user = authenticate(request, username=usuario_direto.username, password=senha)
+
         if user is not None:
-            # Gera código de 6 dígitos aleatório
-            codigo_2fa = str(random.randint(100000, 999999))
-            
-            # Salva no banco de dados
-            TwoFactorCode.objects.update_or_create(
-                user=user,
-                defaults={'codigo': codigo_2fa, 'criado_em': timezone.now()}
-            )
-            
-            # 3. A MÁGICA AQUI: O sistema acessa a ficha do usuário encontrado e envia para o e-mail dele!
-            send_mail(
-                'Seu Código de Acesso - Trackmotor',
-                f'Olá {user.first_name},\n\nSeu código de verificação é: {codigo_2fa}\n\nEle expira em 10 minutos.',
-                settings.DEFAULT_FROM_EMAIL, # Puxa a variável inteligente do settings.py
-                [user.email], # Puxa automaticamente o e-mail real do cadastro
-                fail_silently=False,
-            )
-            
-            # Salva temporariamente o ID do usuário na sessão
-            request.session['pre_2fa_user_id'] = user.id
-            
-            # Redireciona para a tela do 2FA
-            return redirect('verify_2fa')
+            return _iniciar_fluxo_2fa(request, user)
         else:
             messages.error(request, 'Usuário ou senha incorretos. Tente novamente.')
             
-    # Se for GET, só mostra o login vazio
+    # Se apenas abriu a página (GET), mostra a tela de login vazia
     return render(request, 'login.html')
+
+
+# FUNÇÃO 3: O "Hub" intermediário para escolher entre Cliente, Mecânico ou Dono
+def escolher_perfil_login(request):
+    # Recupera da sessão o e-mail validado na tela de login
+    hub_email = request.session.get('hub_email')
+    unlocked_ids = request.session.get('hub_unlocked_ids', [])
+
+    # Segurança: se alguém digitar '/escolher-perfil/' direto no navegador sem passar pelo login, expulsa pro login
+    if not hub_email or not unlocked_ids:
+        return redirect('login')
+
+    contas = list(User.objects.filter(email__iexact=hub_email).order_by('id'))
+    if not contas:
+        return redirect('login')
+
+    # Quando o usuário clica em "Continuar como..." em um dos cartões do Hub:
+    if request.method == 'POST':
+        user_id_escolhido = request.POST.get('user_id')
+        conta_escolhida = get_object_or_404(User, id=user_id_escolhido, email__iexact=hub_email)
+
+        # Se este perfil usa a mesma senha que já foi validada no login, dispara o 2FA na hora
+        if conta_escolhida.id in unlocked_ids:
+            return _iniciar_fluxo_2fa(request, conta_escolhida)
+
+        # Se este perfil tem uma senha diferente (ex: conta de cliente criada no balcão usando a placa),
+        # confere a senha digitada especificamente dentro do cartão dele:
+        senha_perfil = request.POST.get('password_perfil', '')
+        usuario_validado = authenticate(request, username=conta_escolhida.username, password=senha_perfil)
+        if usuario_validado is not None:
+            return _iniciar_fluxo_2fa(request, usuario_validado)
+        else:
+            messages.error(request, f'Senha incorreta para o perfil de {conta_escolhida.get_role_display()}.')
+
+    # Prepara um texto de resumo amigável para mostrar dentro de cada cartão na tela do Hub
+    for conta in contas:
+        conta.desbloqueada = (conta.id in unlocked_ids)
+        if conta.role == 'DONO':
+            oficina = conta.oficinas_gerenciadas.first()
+            conta.resumo_perfil = f"Oficina: {oficina.nome}" if oficina else "Painel Administrativo"
+        elif conta.role == 'MECANICO':
+            oficina = conta.oficina_vinculada
+            conta.resumo_perfil = f"Equipe: {oficina.nome}" if oficina else "Perfil Profissional"
+        else:
+            total_carros = conta.veiculos.count()
+            conta.resumo_perfil = f"{total_carros} veículo(s) cadastrado(s)"
+
+    return render(request, 'select_role.html', {'contas': contas, 'email': hub_email})
 
 def verify_2fa(request):
     # Tenta descobrir quem está tentando logar
@@ -290,11 +381,22 @@ def home(request):
 def atualizar_perfil(request):
     if request.method == 'POST':
         user = request.user
+        novo_email = request.POST.get('email', user.email).strip().lower()
+
+        # Bloqueia apenas se já existir outra conta do MESMO cargo usando esse e-mail
+        if novo_email and User.objects.filter(email__iexact=novo_email, role=user.role).exclude(id=user.id).exists():
+            messages.error(request, f'⚠️ Este e-mail já possui outra conta cadastrada como {user.get_role_display()}.')
+            return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+        # Se a conta foi criada no balcão sem usuário personalizado (username igual ao e-mail antigo), acompanha a troca
+        if user.email and user.username.lower() == user.email.lower():
+            if not User.objects.filter(username__iexact=novo_email).exclude(id=user.id).exists():
+                user.username = novo_email
         
         # Atualiza os dados básicos
         user.first_name = request.POST.get('first_name', user.first_name)
         user.last_name = request.POST.get('last_name', user.last_name)
-        user.email = request.POST.get('email', user.email)
+        user.email = novo_email
         
         # Campo Telefone no User model
         if hasattr(user, 'telefone'):
@@ -308,6 +410,7 @@ def atualizar_perfil(request):
             update_session_auth_hash(request, user)
             
         user.save()
+        messages.success(request, 'Perfil atualizado com sucesso!')
         
     # Redireciona de volta para a página de onde a pessoa veio
     return redirect(request.META.get('HTTP_REFERER', 'home'))
@@ -529,15 +632,16 @@ def atendimento_balcao(request):
             return redirect('home')
 
         # Coleta os dados do formulário HTML
-        nome_cliente = request.POST.get('nome_cliente')
+        nome_cliente = request.POST.get('nome_cliente', '').strip()
         # Blindagem contra espaços e letras maiúsculas no e-mail:
         email_cliente = request.POST.get('email_cliente', '').strip().lower()
-        telefone_cliente = request.POST.get('telefone_cliente')
+        username_cliente = request.POST.get('username_cliente', '').strip()
+        telefone_cliente = request.POST.get('telefone_cliente', '').strip()
 
         placa = request.POST.get('placa', '').strip().upper() 
         marca = request.POST.get('marca')
         modelo = request.POST.get('modelo')
-        ano = request.POST.get('ano', 2020) 
+        ano = request.POST.get('ano') or 2020
         descricao_problema = request.POST.get('descricao_problema')
         tipo_servico = request.POST.get('tipo', 'CORRETIVA') 
 
@@ -556,13 +660,37 @@ def atendimento_balcao(request):
             )
             return redirect('home')
 
-        # --- O CLIENTE (SILENT ONBOARDING) ---
-        cliente = User.objects.filter(email=email_cliente).first()
+        # Validação do nome de usuário opcional (se o Dono ou Mecânico tiver preenchido)
+        if username_cliente:
+            if ' ' in username_cliente or '@' in username_cliente:
+                messages.error(request, '⚠️ O Usuário de Login opcional do cliente não deve conter espaços nem "@".')
+                return redirect('home')
+
+        # --- O CLIENTE (SILENT ONBOARDING COM USUÁRIO OPCIONAL) ---
+        # Busca especificamente uma conta de CLIENTE com este e-mail (sem conflitar caso ele já seja Mecânico ou Dono)
+        cliente = User.objects.filter(email__iexact=email_cliente, role='CLIENTE').first()
+        conta_nova_criada = False
         
         if not cliente:
+            # Define qual será o username desta nova conta de cliente
+            if username_cliente:
+                if User.objects.filter(username__iexact=username_cliente).exists():
+                    messages.error(request, f'⚠️ O nome de usuário "{username_cliente}" já está em uso. Escolha outro ou deixe o campo em branco.')
+                    return redirect('home')
+                login_definido = username_cliente
+            else:
+                # Se não informou usuário personalizado, usa o e-mail (ou gera variação se já existir username igual)
+                if not User.objects.filter(username__iexact=email_cliente).exists():
+                    login_definido = email_cliente
+                else:
+                    prefixo = email_cliente.split('@')[0][:12]
+                    login_definido = f"{prefixo}_{random.randint(100, 999)}"
+                    while User.objects.filter(username__iexact=login_definido).exists():
+                        login_definido = f"{prefixo}_{random.randint(1000, 9999)}"
+
             # 1. Cria apenas o utilizador base (username, email, password)
             cliente = User.objects.create_user(
-                username=email_cliente, 
+                username=login_definido, 
                 email=email_cliente,
                 password=placa
             )
@@ -571,6 +699,13 @@ def atendimento_balcao(request):
             cliente.telefone = telefone_cliente
             cliente.role = 'CLIENTE'
             cliente.save()
+            conta_nova_criada = True
+        else:
+            # Se o cliente já tinha conta gerada apenas com e-mail e agora a oficina definiu um apelido livre para ele
+            if username_cliente and cliente.username.lower() == email_cliente.lower():
+                if not User.objects.filter(username__iexact=username_cliente).exclude(id=cliente.id).exists():
+                    cliente.username = username_cliente
+                    cliente.save()
 
         # --- O VEÍCULO ---
         veiculo = Vehicle.objects.filter(placa=placa).first()
@@ -592,6 +727,20 @@ def atendimento_balcao(request):
             tipo=tipo_servico,
             status='PENDENTE' 
         )
+
+        if conta_nova_criada:
+            if cliente.username.lower() != email_cliente.lower():
+                messages.success(
+                    request,
+                    f'✅ O.S. criada! Passe o acesso ao cliente — Usuário: "{cliente.username}" (ou e-mail "{email_cliente}") | Senha inicial: {placa}'
+                )
+            else:
+                messages.success(
+                    request,
+                    f'✅ O.S. criada! Passe o acesso ao cliente — Login: "{email_cliente}" | Senha inicial: {placa}'
+                )
+        else:
+            messages.success(request, f'✅ Ordem de Serviço aberta com sucesso para {cliente.first_name or cliente.username}!')
 
         return redirect('home')
         

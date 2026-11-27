@@ -1,0 +1,288 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Configurações do PWA e Ícones -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#f39c12">
+    <link rel="icon" type="image/png" href="{% static 'icon-192x192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'icon-192x192.png' %}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trackmotor">
+
+    <title>Escolher Perfil - Trackmotor</title>
+    <style>
+        body {
+            background-color: #1a1d24;
+            color: #a9b1bd;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .theme-btn {
+            position: fixed;
+            top: 20px;
+            right: 25px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .hub-card {
+            background-color: #222630;
+            border: 1px solid #2d3340;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 460px;
+            padding: 32px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        .hub-card h2 {
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            font-size: 24px;
+        }
+        .hub-subtitle {
+            font-size: 13px;
+            color: #a9b1bd;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .hub-subtitle strong {
+            color: #ff7b00;
+        }
+        .alert-error {
+            background-color: rgba(231, 76, 60, 0.12);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+        .profile-option {
+            background-color: #1a1d24;
+            border: 1px solid #2d3340;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+        }
+        .profile-option:hover {
+            border-color: #ff7b00;
+        }
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .profile-title {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 16px;
+            display: block;
+        }
+        .profile-meta {
+            font-size: 12px;
+            color: #a9b1bd;
+            margin-top: 3px;
+            display: block;
+        }
+        .role-badge {
+            background-color: rgba(255, 123, 0, 0.15);
+            color: #ff7b00;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .btn-acessar {
+            width: 100%;
+            padding: 11px;
+            background-color: #ff7b00;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .btn-acessar:hover {
+            background-color: #e66e00;
+        }
+        .form-control {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            background-color: #222630;
+            border: 1px solid #2d3340;
+            color: #ffffff;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .password-wrapper input {
+            padding-right: 42px !important;
+        }
+        .password-wrapper input::-ms-reveal,
+        .password-wrapper input::-ms-clear {
+            display: none;
+        }
+        .btn-toggle-senha {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer;
+            color: #a9b1bd;
+            display: flex;
+            align-items: center;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #a9b1bd;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .back-link:hover {
+            color: #ff7b00;
+        }
+
+        /* Tema Claro */
+        body.light-theme { background-color: #f4f6f8; color: #4b5563; }
+        body.light-theme .hub-card { background-color: #ffffff; border-color: #e5e7eb; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        body.light-theme .hub-card h2, body.light-theme .profile-title { color: #1f2937; }
+        body.light-theme .profile-option { background-color: #f9fafb; border-color: #e5e7eb; }
+        body.light-theme .form-control { background-color: #ffffff; border-color: #d1d5db; color: #1f2937; }
+    </style>
+</head>
+<body>
+    <button id="theme-toggle-btn" class="theme-btn" onclick="toggleTheme()">🌙</button>
+
+    <div class="hub-card">
+        <h2>Qual conta deseja acessar?</h2>
+        <p class="hub-subtitle">
+            Encontramos mais de um perfil vinculado a <strong>{{ email }}</strong>. Escolha abaixo para receber o código de verificação:
+        </p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% for conta in contas %}
+            <div class="profile-option">
+                <div class="profile-header">
+                    <div>
+                        <span class="profile-title">
+                            {% if conta.role == 'DONO' %}🏢 Dono de Oficina
+                            {% elif conta.role == 'MECANICO' %}🔧 Mecânico
+                            {% else %}🚗 Cliente{% endif %}
+                        </span>
+                        <span class="profile-meta">Usuário: <strong>{{ conta.username }}</strong> · {{ conta.resumo_perfil }}</span>
+                    </div>
+                    <span class="role-badge">{{ conta.get_role_display }}</span>
+                </div>
+
+                <form method="POST" action="{% url 'escolher_perfil' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ conta.id }}">
+
+                    {% if not conta.desbloqueada %}
+                        <span style="font-size: 12px; color: #a9b1bd; display: block; margin-bottom: 6px;">
+                            Este perfil utiliza uma senha diferente:
+                        </span>
+                        <div class="password-wrapper">
+                            <input type="password" name="password_perfil" class="form-control" placeholder="Digite a senha deste perfil" required>
+                            <button type="button" class="btn-toggle-senha" onclick="toggleSenha(this)" title="Mostrar senha">
+                                <svg class="olho-aberto" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="olho-fechado" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn-acessar">
+                        Continuar como {% if conta.role == 'DONO' %}Dono{% elif conta.role == 'MECANICO' %}Mecânico{% else %}Cliente{% endif %}
+                    </button>
+                </form>
+            </div>
+        {% endfor %}
+
+        <a href="{% url 'login' %}" class="back-link">← Voltar para o Login</a>
+    </div>
+
+    <script>
+        function toggleSenha(botao) {
+            const input = botao.parentElement.querySelector('input');
+            const olhoAberto = botao.querySelector('.olho-aberto');
+            const olhoFechado = botao.querySelector('.olho-fechado');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                olhoAberto.style.display = 'none';
+                olhoFechado.style.display = 'block';
+            } else {
+                input.type = 'password';
+                olhoAberto.style.display = 'block';
+                olhoFechado.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('trackmotor_theme');
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                if (themeBtn) themeBtn.innerText = '☀️';
+            }
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            body.classList.toggle('light-theme');
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('trackmotor_theme', 'light');
+                themeBtn.innerText = '☀️';
+            } else {
+                localStorage.setItem('trackmotor_theme', 'dark');
+                themeBtn.innerText = '🌙';
+            }
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/serviceworker.js');
+            });
+        }
+    </script>
+</body>
+</html>

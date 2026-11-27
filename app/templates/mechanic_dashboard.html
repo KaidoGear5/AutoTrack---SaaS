@@ -577,19 +577,26 @@
                 </div>
 
                 <h4 class="form-section-title">Dados do Cliente</h4>
-                <div class="form-group">
-                    <label>Nome Completo *</label>
-                    <input type="text" name="nome_cliente" class="form-control" placeholder="Nome do proprietário" required>
+                <div class="form-row">
+                    <div class="form-group form-col">
+                        <label>Nome Completo *</label>
+                        <input type="text" name="nome_cliente" class="form-control" placeholder="Nome do proprietário" required>
+                    </div>
+                    <div class="form-group form-col">
+                        <label>Usuário de Login (Opcional)</label>
+                        <input type="text" name="username_cliente" maxlength="15" class="form-control" placeholder="Ex: carlos123">
+                        <span style="font-size: 12px; color: #a9b1bd; margin-top: 5px; display: block;">Opcional (sem espaços). O cliente poderá logar com este usuário ou com o e-mail.</span>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group form-col-2">
                         <label>E-mail *</label>
                         <input type="email" name="email_cliente" class="form-control" placeholder="cliente@email.com" required>
-                        <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">Será usado como usuário de Login.</span>
+                        <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">Funciona como login e recebe o código de verificação (2FA).</span>
                     </div>
                     <div class="form-group form-col">
                         <label>Telefone</label>
-                        <input type="text" name="telefone_cliente" class="form-control" placeholder="(11) 99999-9999">
+                        <input type="text" name="telefone_cliente" maxlength="15" class="form-control" placeholder="(11) 99999-9999">
                     </div>
                 </div>
 
