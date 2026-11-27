@@ -197,9 +197,9 @@
                 <div class="profile-header">
                     <div>
                         <span class="profile-title">
-                            {% if conta.role == 'DONO' %}🏢 Dono de Oficina
-                            {% elif conta.role == 'MECANICO' %}🔧 Mecânico
-                            {% else %}🚗 Cliente{% endif %}
+                            {% if conta.role == 'DONO' %}Dono de Oficina
+                            {% elif conta.role == 'MECANICO' %}Mecânico
+                            {% else %}Cliente{% endif %}
                         </span>
                         <span class="profile-meta">Usuário: <strong>{{ conta.username }}</strong> · {{ conta.resumo_perfil }}</span>
                     </div>
