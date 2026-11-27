@@ -444,6 +444,21 @@ def request_maintenance(request):
         
         if form.is_valid():
             nova_manutencao = form.save(commit=False)
+
+            # --- TRAVA DE DUPLICIDADE (IMPEDE MAIS DE UMA SOLICITAÇÃO ATIVA POR VEÍCULO) ---
+            # Verifica se este veículo já possui alguma O.S. aberta (que não esteja Concluída, Recusada ou Cancelada)
+            os_em_aberto = Maintenance.objects.filter(
+                veiculo=nova_manutencao.veiculo
+            ).exclude(
+                status__in=['CONCLUIDO', 'RECUSADA', 'CANCELADO']
+            ).first()
+
+            if os_em_aberto:
+                messages.error(
+                    request,
+                    f'⚠️ O veículo {nova_manutencao.veiculo} já possui uma solicitação em aberto ({os_em_aberto.get_status_display()}). Aguarde a finalização ou cancele a solicitação atual antes de abrir outra.'
+                )
+                return redirect('home')
             
             # --- NOVA LÓGICA DE FILA DE ESPERA (MOTOR DE CAPACIDADE) ---
             
@@ -519,12 +534,27 @@ def atendimento_balcao(request):
         email_cliente = request.POST.get('email_cliente', '').strip().lower()
         telefone_cliente = request.POST.get('telefone_cliente')
 
-        placa = request.POST.get('placa').upper() 
+        placa = request.POST.get('placa', '').strip().upper() 
         marca = request.POST.get('marca')
         modelo = request.POST.get('modelo')
         ano = request.POST.get('ano', 2020) 
         descricao_problema = request.POST.get('descricao_problema')
         tipo_servico = request.POST.get('tipo', 'CORRETIVA') 
+
+        # --- TRAVA DE DUPLICIDADE DE O.S. PARA O MESMO VEÍCULO ---
+        # Antes de criar registros novos, verifica se esta placa já possui uma O.S. ativa no sistema
+        os_em_aberto = Maintenance.objects.filter(
+            veiculo__placa=placa
+        ).exclude(
+            status__in=['CONCLUIDO', 'RECUSADA', 'CANCELADO']
+        ).first()
+
+        if os_em_aberto:
+            messages.error(
+                request,
+                f'⚠️ O veículo de placa {placa} já possui uma Ordem de Serviço em aberto ({os_em_aberto.get_status_display()}).'
+            )
+            return redirect('home')
 
         # --- O CLIENTE (SILENT ONBOARDING) ---
         cliente = User.objects.filter(email=email_cliente).first()
@@ -580,6 +610,21 @@ def nova_os_existente(request, veiculo_id):
             oficina_atual = request.user.oficinas_gerenciadas.first()
             
         if oficina_atual:
+            # --- TRAVA DE DUPLICIDADE DE O.S. PARA O MESMO VEÍCULO ---
+            # Impede que a oficina gere uma O.S. rápida se o veículo já tiver outra em andamento
+            os_em_aberto = Maintenance.objects.filter(
+                veiculo=veiculo
+            ).exclude(
+                status__in=['CONCLUIDO', 'RECUSADA', 'CANCELADO']
+            ).first()
+
+            if os_em_aberto:
+                messages.error(
+                    request,
+                    f'⚠️ O veículo {veiculo} já possui uma Ordem de Serviço em aberto ({os_em_aberto.get_status_display()}).'
+                )
+                return redirect('/?tab=solicitacoes')
+
             descricao_problema = request.POST.get('descricao_problema')
             
             # Abre a OS direto, pulando a criação de cliente e veículo
