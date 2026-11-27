@@ -284,6 +284,48 @@
                 width: 100%;
             }
         }
+
+        /* Campo de Senha com Ícone de Mostrar/Ocultar */
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .password-wrapper input {
+            width: 100%;
+            box-sizing: border-box;
+            padding-right: 42px !important;
+        }
+        .password-wrapper input::-ms-reveal,
+        .password-wrapper input::-ms-clear {
+            display: none;
+        }
+        .btn-toggle-senha {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 4px !important;
+            margin: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            cursor: pointer;
+            color: #a9b1bd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-toggle-senha:hover {
+            color: #f39c12;
+        }
+        body.light-theme .btn-toggle-senha {
+            color: #6b7280;
+        }
+        body.light-theme .btn-toggle-senha:hover {
+            color: #ff7b00;
+        }
     </style>
 </head>
 <body>
@@ -722,7 +764,20 @@
                 <h4 class="form-section-title">Segurança</h4>
                 <div class="form-group">
                     <label>Nova Senha</label>
-                    <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para não alterar a senha atual">
+                    <div class="password-wrapper">
+                        <input type="password" name="nova_senha" class="form-control" placeholder="Deixe em branco para não alterar a senha atual">
+                        <button type="button" class="btn-toggle-senha" onclick="toggleSenha(this)" title="Mostrar senha">
+                            <svg class="olho-aberto" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="olho-fechado" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <span style="font-size: 13px; color: #a9b1bd; margin-top: 5px; display: block;">A senha NÃO pode ser inteiramente numérica e deve ter o Mínimo de 8 caracteres.</span>
                 </div>
 
                 <button type="submit" class="btn btn-blue" style="width: 100%; margin-top: 15px;">Salvar Alterações</button>
@@ -902,6 +957,24 @@
             } else {
                 localStorage.setItem('trackmotor_theme', 'dark');
                 themeBtn.innerText = '🌙';
+            }
+        }
+
+        function toggleSenha(botao) {
+            const input = botao.parentElement.querySelector('input');
+            const olhoAberto = botao.querySelector('.olho-aberto');
+            const olhoFechado = botao.querySelector('.olho-fechado');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                olhoAberto.style.display = 'none';
+                olhoFechado.style.display = 'block';
+                botao.title = 'Ocultar senha';
+            } else {
+                input.type = 'password';
+                olhoAberto.style.display = 'block';
+                olhoFechado.style.display = 'none';
+                botao.title = 'Mostrar senha';
             }
         }
 

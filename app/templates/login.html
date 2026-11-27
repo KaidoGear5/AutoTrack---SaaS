@@ -111,6 +111,49 @@
                 font-size: 26px;
             }
         }
+
+        /* Campo de Senha com Ícone de Mostrar/Ocultar */
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .password-wrapper input {
+            width: 100%;
+            box-sizing: border-box;
+            padding-right: 42px !important;
+        }
+        /* Oculta o ícone duplicado nativo do Microsoft Edge */
+        .password-wrapper input::-ms-reveal,
+        .password-wrapper input::-ms-clear {
+            display: none;
+        }
+        .btn-toggle-senha {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 4px !important;
+            margin: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            cursor: pointer;
+            color: #a9b1bd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-toggle-senha:hover {
+            color: #f39c12;
+        }
+        body.light-theme .btn-toggle-senha {
+            color: #6b7280;
+        }
+        body.light-theme .btn-toggle-senha:hover {
+            color: #ff7b00;
+        }
     </style>
 </head>
 <body>
@@ -144,7 +187,12 @@
 
                 <div class="form-group">
                     <label>Senha:</label>
-                    <input type="password" name="password" class="form-control" placeholder="Sua senha" required>
+                    <div class="password-wrapper">
+                        <input type="password" name="password" class="form-control" placeholder="Sua senha" required>
+                        <button type="button" class="btn-toggle-senha" onclick="togglePasswordVisibility()">
+                            <span>👁️</span>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-orange">Acessar Conta</button>
@@ -183,6 +231,24 @@
             } else {
                 localStorage.setItem('trackmotor_theme', 'dark');
                 themeBtn.innerText = '🌙';
+            }
+        }
+
+        function toggleSenha(botao) {
+            const input = botao.parentElement.querySelector('input');
+            const olhoAberto = botao.querySelector('.olho-aberto');
+            const olhoFechado = botao.querySelector('.olho-fechado');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                olhoAberto.style.display = 'none';
+                olhoFechado.style.display = 'block';
+                botao.title = 'Ocultar senha';
+            } else {
+                input.type = 'password';
+                olhoAberto.style.display = 'block';
+                olhoFechado.style.display = 'none';
+                botao.title = 'Mostrar senha';
             }
         }
 
