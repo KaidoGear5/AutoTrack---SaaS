@@ -164,7 +164,8 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 
 AUTH_USER_MODEL = 'app.User'
 
-# Configurações de Login/Logout
+# Configurações de Login/Logout - Evita erro 404 em /accounts/login/
+LOGIN_URL = 'login'  # Para onde ir ao tentar acessar uma página protegida sem estar logado
 LOGIN_REDIRECT_URL = 'home'  # Para onde ir ao logar com sucesso (nossa tela inicial)
 LOGOUT_REDIRECT_URL = 'login' # Para onde ir ao clicar em sair
 # Configuração de Arquivos de Mídia (Uploads de usuários)
@@ -174,6 +175,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Força o HTTPS interno, impede o roubo de cookies e injeções no navegador & Força o HTTPS interno apenas em produção (VPS)
 if ENVIRONMENT == 'production':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

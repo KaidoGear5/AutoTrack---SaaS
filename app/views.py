@@ -178,7 +178,9 @@ def verify_2fa(request):
             login(request, user)
             
             # Limpa a sessão temporária e deleta o token do banco
-            del request.session['pre_2fa_user_id']
+            request.session.pop('pre_2fa_user_id', None)
+            # Sinaliza para o painel inicial reforçar o Set-Cookie da sessão na resposta 200 OK (evita perda em 302 no Firefox)
+            request.session['_confirmar_sessao_2fa'] = True
             token_obj.delete()
             
             return redirect('home')
@@ -192,8 +194,11 @@ def verify_2fa(request):
 # =======================================================
 @login_required(login_url='login')
 def home(request):
-    # O Django verifica quem é o usuário logado (request.user) e qual o cargo dele (role)
-    
+    # Reforça a gravação do cookie de sessão no navegador logo após concluir o 2FA
+    if '_confirmar_sessao_2fa' in request.session:
+        request.session.pop('_confirmar_sessao_2fa', None)
+
+    # O Django verifica quem é o usuário logado (request.user) e qual o cargo dele (role)    
     # ROTA DO MECÂNICO
     if request.user.role == 'MECANICO':
         erro = None
@@ -377,7 +382,7 @@ def home(request):
 # ==============================================================================
 # ATUALIZAR PERFIL DO USUÁRIO
 # ==============================================================================
-@login_required
+@login_required(login_url='login')
 def atualizar_perfil(request):
     if request.method == 'POST':
         user = request.user
@@ -1140,7 +1145,7 @@ def marcar_notificacoes_lidas(request):
 # ==============================================================================
 # CONFIGURAÇÃO DA OFICINA
 # ==============================================================================
-@login_required
+@login_required(login_url='login')
 def configurar_limites_oficina(request, oficina_id):
     if request.method == 'POST' and request.user.role == 'DONO':
         # Procura a oficina garantindo que ela pertence ao dono logado
@@ -1188,7 +1193,7 @@ def editar_oficina(request, oficina_id):
 # ==============================================================================
 # GERADOR DE PDF DA ORDEM DE SERVIÇO
 # ==============================================================================
-@login_required
+@login_required(login_url='login')
 def gerar_pdf_os(request, id):
     # Busca a manutenção
     manutencao = get_object_or_404(Maintenance, id=id)
